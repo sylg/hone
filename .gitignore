@@ -1,0 +1,13 @@
+# Hone review state (local)
+.hone/
+
+# OS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Node (if we add tooling later)
+node_modules/
