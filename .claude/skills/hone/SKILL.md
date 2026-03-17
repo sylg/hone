@@ -316,12 +316,12 @@ Read `reference/size-calibration.md`. Determine the task size (S/M/L/XL) based o
 
 The user can override: "treat this as XL" or "just do a quick scan."
 
-| Size | Questions | Dimensions | Unknown Unknowns | Subagents |
-|------|-----------|-----------|-------------------|-----------|
-| S    | 2-3       | Quick scan only | No | No |
-| M    | 5-10      | Gap + Assumptions | Brief check | No |
-| L    | 15-25     | All 7 dimensions | Yes | Optional |
-| XL   | 25+       | All 7 + deep unknown unknowns | Yes, dedicated phase | Yes |
+| Size | Questions | Core dims | Optional dims recommended | Subagents |
+|------|-----------|-----------|--------------------------|-----------|
+| S    | 2-3       | Quick scan only | None | No |
+| M    | 5-10      | Gap + Assumptions | 0-1 based on signals | No |
+| L    | 15-25     | Gap + Assumptions | 2-4 based on signals | Optional |
+| XL   | 25+       | Gap + Assumptions | All applicable + unknowns | Yes |
 
 ### Phase 1: Question-Driven Review
 
@@ -344,19 +344,53 @@ When the developer answers a question, three things can happen:
 
 Show the Review Progress bar between questions so the developer always knows where they are.
 
-### Phase 2: Dimension Review
+### Phase 2: Core Dimension Review
 
-Run each applicable review dimension by reading the corresponding reference file:
+Always run these two core dimensions:
 
-a. **Gap Analysis** (`reference/gap-analysis.md`)
-b. **Assumption Surfacing** (`reference/assumption-surfacing.md`)
-c. **Complexity Audit** (`reference/complexity-audit.md`)
-d. **Scope Creep Detection** (`reference/scope-creep-detection.md`)
-e. **Dependency & Ordering Check** (`reference/dependency-check.md`)
-f. **Testability Review** (`reference/testability-review.md`)
-g. **Context Completeness** (`reference/context-completeness.md`)
+a. **Gap Analysis** (`reference/gap-analysis.md`) — what's missing
+b. **Assumption Surfacing** (`reference/assumption-surfacing.md`) — what's assumed
 
-Each dimension generates questions (Phase 1) before generating findings. After completing each dimension, show the Dimension Scorecard.
+Each dimension generates questions via `AskUserQuestion` before generating findings. After completing each dimension, show the Dimension Scorecard.
+
+### Phase 2.5: Recommend Optional Dimensions
+
+After the core dimensions, recommend additional dimensions based on signals detected during the review. Use `AskUserQuestion` to let the user choose:
+
+```
+AskUserQuestion({
+  questions: [{
+    header: "🪙 Dimensions",
+    question: "Based on the review so far, I recommend these additional checks. Which would you like to run?",
+    options: [
+      { label: "Testability", description: "Several tasks have vague success criteria — 'it works', 'looks good'" },
+      { label: "Complexity", description: "Task 5 looks like a God Task — webhook handling covers 3+ concerns" },
+      { label: "Skip all", description: "Proceed to verdict with just the core review" }
+    ],
+    multiSelect: true
+  }]
+})
+```
+
+#### Recommendation signals
+
+| Dimension | Recommend when... |
+|-----------|-------------------|
+| Unknown unknowns | L/XL size, or unfamiliar domain detected |
+| Complexity audit | God Task anti-pattern, or tasks with buried sub-tasks |
+| Scope creep | Scope Balloon anti-pattern, or task count > 8 |
+| Dependency check | Multi-phase specs, explicit ordering, or 5+ tasks |
+| Testability | Untestable Task anti-pattern, or vague success criteria |
+| Context completeness | Spec is a handoff doc, or agent-targeted execution |
+| Code simplicity | Code-heavy specs, refactoring tasks |
+| Data quality | Data model changes, ERD/schema specs, migrations |
+
+For Size S: skip recommendations entirely.
+For Size M: recommend at most 1.
+For Size L: recommend 2-4.
+For Size XL: recommend all applicable, use subagents to run in parallel.
+
+Run each selected dimension by reading its reference file and following the same question-driven review pattern as the core dimensions.
 
 ### Phase 3: Unknown Unknowns (L/XL only)
 
