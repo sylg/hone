@@ -1,5 +1,5 @@
 ---
-name: review
+name: hone-review
 description: >
   Full Hone review pipeline. Pressure-test a spec, plan, or implementation
   document before execution. Classifies size, asks questions interactively,

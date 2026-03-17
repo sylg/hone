@@ -1,5 +1,5 @@
 ---
-name: context
+name: hone-context
 description: >
   Check if a spec contains enough context for a fresh agent to execute
   without asking clarifying questions. Finds missing file paths, undefined

@@ -1,5 +1,5 @@
 ---
-name: unknowns
+name: hone-unknowns
 description: >
   Surface unknown unknowns — things the developer doesn't know they
   don't know. Uses broad domain knowledge to identify failure modes,

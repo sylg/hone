@@ -1,5 +1,5 @@
 ---
-name: testability
+name: hone-testability
 description: >
   Review if every task in a spec has clear, testable success criteria.
   Flags vague definitions of "done" and suggests concrete verification steps.

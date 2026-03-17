@@ -1,5 +1,5 @@
 ---
-name: report
+name: hone-report
 description: >
   Generate a comprehensive review report with executive summary,
   question scorecard, findings by dimension, and recommended actions.

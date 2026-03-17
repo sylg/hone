@@ -1,5 +1,5 @@
 ---
-name: deps
+name: hone-deps
 description: >
   Check task dependencies and execution ordering in a spec. Finds
   missing prerequisites, incorrect sequencing, and parallelization

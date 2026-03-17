@@ -1,5 +1,5 @@
 ---
-name: complexity
+name: hone-complexity
 description: >
   Audit a spec for hidden complexity and underestimated risk. Finds tasks
   that are actually multiple tasks, glossed-over integration points, and

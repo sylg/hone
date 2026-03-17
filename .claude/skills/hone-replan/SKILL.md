@@ -1,5 +1,5 @@
 ---
-name: replan
+name: hone-replan
 description: >
   Generate a structured Replan Brief for loop-back to planning. Used when
   review reveals structural issues that can't be fixed by sharpening.

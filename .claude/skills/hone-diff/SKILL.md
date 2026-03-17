@@ -1,5 +1,5 @@
 ---
-name: diff
+name: hone-diff
 description: >
   Show the before/after diff of a honed spec in Kintsugi style.
   Displays additions, modifications, and removals with gold seam markers.

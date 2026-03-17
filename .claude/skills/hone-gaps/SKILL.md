@@ -1,5 +1,5 @@
 ---
-name: gaps
+name: hone-gaps
 description: >
   Find missing pieces in a spec or plan. Gap analysis only — what's absent,
   not what's wrong. Focuses on missing error handling, unaddressed edge cases,

@@ -1,5 +1,5 @@
 ---
-name: assumptions
+name: hone-assumptions
 description: >
   Surface hidden assumptions in a spec or plan. For every statement,
   asks "what must be true for this to work?" and flags anything that

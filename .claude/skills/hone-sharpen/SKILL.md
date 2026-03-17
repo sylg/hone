@@ -1,5 +1,5 @@
 ---
-name: sharpen
+name: hone-sharpen
 description: >
   Apply repairs to a spec based on review findings. Requires a previous
   review to have been run. Marks all repairs with Kintsugi markers.

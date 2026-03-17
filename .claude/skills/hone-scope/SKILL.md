@@ -1,5 +1,5 @@
 ---
-name: scope
+name: hone-scope
 description: >
   Detect scope creep in a spec. Compares tasks against original intent
   and flags anything that wasn't part of the original ask.
