@@ -39,7 +39,7 @@ Parse these from the args if present:
 Execute the full Hone pipeline as described in the `hone` skill:
 
 1. **Phase 0**: Classify size (or use override) — display Classification Announcement box
-2. **Phase 1**: Question-driven review — ask questions using the Question Formatting template
+2. **Phase 1**: Question-driven review — ask questions using `AskUserQuestion` tool
 3. **Phase 2**: Dimension review — show Dimension Scorecard after each dimension
 4. **Phase 3**: Unknown unknowns (if L/XL and not skipped)
 5. **Phase 4**: Verdict — display the full Verdict Block
@@ -47,21 +47,28 @@ Execute the full Hone pipeline as described in the `hone` skill:
 
 Read ALL reference files applicable to the classified size before starting.
 
+## Interaction Model
+
+**CRITICAL**: Use the `AskUserQuestion` tool for ALL review questions. This renders native interactive UI instead of ASCII text boxes. Follow the Question Formatting section in the `hone` skill for how to map Hone questions to `AskUserQuestion` parameters.
+
+- Use the `header` field for tier badge + counter: `"T2 Gap [3/18]"`
+- Provide 2-4 actionable options with descriptions
+- Output styled text (progress bars, scorecards, findings) as regular markdown between questions
+
 ## Visual Identity
 
 Follow the Visual Identity section in the `hone` skill exactly. Key rules:
-- Use box-drawing characters for all containers, never plain `---`
+- Use box-drawing characters for scorecards, verdicts, anti-pattern callouts
 - Show progress bars between questions
-- Each finding gets its own seam block with the 🪙 marker
+- Each finding gets its own 🪙 seam block
 - Never output a wall of text — restructure with boxes, tables, dividers
 - Anti-pattern detections get the named callout box
 
 ## Key Rules
 
-- Ask questions ONE AT A TIME (except Size S where 2-3 together is fine)
+- Ask questions ONE AT A TIME via `AskUserQuestion` (except Size S where batch 2-3)
 - Wait for answers before proceeding
 - Track every question with its tier
 - Be specific — reference exact sections of the spec
 - Use the voice defined in the hone skill: direct, specific, no filler
-- Show the `[N/M]` question counter on every question
-- Show Review Progress bar between questions
+- Show Review Progress bar as text between questions

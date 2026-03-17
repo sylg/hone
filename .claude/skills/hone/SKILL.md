@@ -40,24 +40,76 @@ When entering a new phase, announce it with a styled header:
 ╰─────────────────────────────────────╯
 ```
 
-### Question Formatting
+### Question Formatting — Use Native UI
 
-Each question gets a distinct visual treatment with its tier badge:
+**CRITICAL**: Use the `AskUserQuestion` tool for ALL review questions. This renders a native, interactive UI instead of ASCII boxes. The developer gets clickable options instead of reading monospace text.
+
+#### How to map Hone questions to AskUserQuestion
+
+- **`header`**: Use the tier badge as the tag. Format: `T2 Gap [3/18]` (tier + counter).
+- **`question`**: The full question text. Include the spec section reference. Example: "What happens when Stripe returns a 502 at POST /api/checkout? The spec (Task 2) doesn't address any failure path."
+- **`options`**: Provide 2-4 context-appropriate response options. Common patterns:
+
+  **For gap questions (T2)**:
+  - "Add error handling" — Describe what specifically to add
+  - "Out of scope for v1" — Acknowledge the gap, document as non-goal
+  - "Need to research" — Flag as spike/research task
+
+  **For assumption questions (T3)**:
+  - "Yes, that's correct" — Confirms the assumption, make it explicit
+  - "No, actually..." — Developer will clarify via Other
+  - "I don't know" — Flag as unresolved unknown
+
+  **For unknown unknown questions (T4)**:
+  - "Add to spec" — Incorporate as a task or constraint
+  - "Out of scope for v1" — Document as non-goal with risk note
+  - "Need to research" — Add as spike task
+  - "Tell me more" — Explain in detail, then re-ask
+
+  **For tradeoff questions (T5)**:
+  - Provide the 2-3 concrete tradeoff options as choices
+  - Each option's `description` explains the implication
+
+- **`multiSelect`**: Always `false` for Hone questions (one answer per question).
+
+#### Batching questions
+
+`AskUserQuestion` supports 1-4 questions per call. Use this to match pacing:
+
+| Size | Questions per call |
+|------|--------------------|
+| S    | 2-3 (batch all)    |
+| M    | 1-2 at a time      |
+| L    | 1 at a time        |
+| XL   | 1 at a time        |
+
+#### Example
+
+For a T2 Gap question about missing webhook retry logic:
 
 ```
-┌─ T2 GAP ─────────────────────────────
-│
-│  What happens when the Stripe webhook
-│  returns a 502? The spec says "handle
-│  errors" but doesn't specify retry
-│  logic or dead letter behavior.
-│
-│  📍 Section: Task 5 — Webhook handler
-│
-└──────────────────────────────── [3/12]
+AskUserQuestion({
+  questions: [{
+    header: "T2 Gap [3/18]",
+    question: "What happens when the Stripe webhook endpoint returns a 502? Task 5 says 'handle webhook' but doesn't specify retry logic, idempotency, or dead letter behavior. Webhooks fail 2-5% of the time in production.",
+    options: [
+      { label: "Add retry logic", description: "Add exponential backoff (3 attempts) + dead letter queue for persistent failures" },
+      { label: "Out of scope", description: "Document as known gap, accept risk of dropped events in v1" },
+      { label: "Need to research", description: "Add spike task to investigate Stripe's retry behavior and webhook best practices" }
+    ],
+    multiSelect: false
+  }]
+})
 ```
 
-The `[3/12]` counter shows question progress (question 3 of ~12 expected).
+#### Between questions — show progress as text
+
+After receiving an answer and before asking the next question, output a brief text progress line:
+
+```
+  Review ████████░░░░░░░░░░░░  42%
+  Phase 2 of 4 · Dimension: Gap Analysis · Q 8/~20
+```
 
 ### Dimension Scorecard (inline during review)
 
@@ -233,7 +285,7 @@ The user can override: "treat this as XL" or "just do a quick scan."
 
 Read `reference/question-engine.md`. This is the core of Hone.
 
-DO NOT dump all findings as a report. Instead, ask questions ONE AT A TIME using the Question Formatting template above. Wait for the answer. Fold the answer into your understanding. Let the answer inform the next question.
+DO NOT dump all findings as a report. Instead, ask questions ONE AT A TIME using the `AskUserQuestion` tool as described in the Question Formatting section above. Wait for the answer. Fold the answer into your understanding. Let the answer inform the next question.
 
 Track every question:
 - Question text

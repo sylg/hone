@@ -43,7 +43,7 @@ Work through the categories systematically:
 - Ordering assumptions
 - Performance assumptions
 
-Use the Question Formatting template from the `hone` skill for each question. Include the `[N/M]` counter. Tag each assumption as `[STATED]` or `[UNSTATED]`.
+Use the `AskUserQuestion` tool for each question with options like "Yes, that's correct", "No, actually...", "I don't know". Use the `header` field for tier + counter: `"T3 Assumption [3/8]"`. Tag each assumption as `[STATED]` or `[UNSTATED]`.
 
 If The Assumption Iceberg anti-pattern is detected, show the anti-pattern callout box.
 

@@ -42,7 +42,7 @@ Focus exclusively on what's MISSING from the spec:
 ╰─────────────────────────────────────╯
 ```
 
-Ask questions related to gaps — do not dump a report. Each gap is presented as a question using the Question Formatting template from the `hone` skill. Include the `[N/M]` counter.
+Ask questions related to gaps using the `AskUserQuestion` tool — do not dump a report. Each gap becomes a native interactive question with actionable options (e.g., "Add error handling", "Out of scope", "Need to research"). Use the `header` field for tier + counter: `"T2 Gap [3/8]"`.
 
 Wait for answers. Fold answers into understanding.
 
