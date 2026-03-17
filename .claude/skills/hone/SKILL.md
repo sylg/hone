@@ -29,15 +29,16 @@ Hone's output should feel **crafted**, not generated. Every interaction has a di
 - **Progress bars** — Use block characters (`█`, `░`, `▓`, `▒`) for confidence and completion indicators.
 - **Compact tables** — Use markdown tables for structured data. Align columns. Keep them tight.
 - **Whitespace is intentional** — Breathing room between sections. Never a wall of text.
+- **Wide containers** — All boxes should be ~72 characters wide. Right edges MUST align. Pad content with trailing spaces to hit the right border. A misaligned box looks broken.
 
 ### Phase Headers
 
 When entering a new phase, announce it with a styled header:
 
 ```
-╭─────────────────────────────────────╮
-│  🪙 PHASE 0 ─ SIZE CALIBRATION     │
-╰─────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────╮
+│  🪙 PHASE 0 ─ SIZE CALIBRATION                                      │
+╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 ### Question Formatting — Use Native UI
@@ -71,6 +72,50 @@ When entering a new phase, announce it with a styled header:
   - Each option's `description` explains the implication
 
 - **`multiSelect`**: Always `false` for Hone questions (one answer per question).
+
+#### Skip protection
+
+If the developer tries to skip or dismiss a question (says "skip", "move on", "don't care"), do NOT silently move on. Use `AskUserQuestion` to confirm:
+
+```
+AskUserQuestion({
+  questions: [{
+    header: "⚠ Skip?",
+    question: "Skipping this means the spec ships with an unreviewed gap. The quality of the review — and your confidence score — will be lower. Are you sure?",
+    options: [
+      { label: "Skip it", description: "Accept the gap. It will be flagged as UNREVIEWED in the verdict." },
+      { label: "Let me answer", description: "Go back to the question — I'll give it a proper answer." }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+#### Risky answer pushback
+
+When the developer chooses an option that accepts significant risk (e.g., "Out of scope" on a security-critical gap, or dismissing a high-severity finding), do NOT silently move on. Push back with a confirmation via `AskUserQuestion`:
+
+```
+AskUserQuestion({
+  questions: [{
+    header: "⚠ Risk accepted",
+    question: "You're choosing to ship without webhook signature verification. This means anyone can POST fake events and grant themselves a paid plan. This will be flagged as a CRITICAL accepted risk in the verdict. Are you sure?",
+    options: [
+      { label: "Yes, accept the risk", description: "I understand the risk. Document it and move on." },
+      { label: "On second thought...", description: "Let me reconsider — go back to the original options." }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+Apply pushback when:
+- A security-critical gap is dismissed (severity: Critical)
+- A high-severity gap is marked "out of scope"
+- An assumption with Critical/High impact-if-wrong is left unresolved
+- An unknown unknown with risk:critical is ignored
+
+Do NOT pushback on medium/low severity choices — respect the developer's judgment on those.
 
 #### Batching questions
 
@@ -116,10 +161,9 @@ After receiving an answer and before asking the next question, output a brief te
 After completing a dimension, show a mini-scorecard:
 
 ```
-  ┌ GAP ANALYSIS ──────────────────┐
-  │ Seams: 3  (██ high  █ medium)  │
-  │ Questions: 5 asked, 4 answered │
-  └────────────────────────────────┘
+┌─ GAP ANALYSIS ─────────────────────────────────────────────────────────┐
+│  Seams found: 3  (██ high  █ medium)   Questions: 5 asked, 4 answered │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Finding Format (Kintsugi Seam)
@@ -127,97 +171,97 @@ After completing a dimension, show a mini-scorecard:
 Each finding is a gold seam — not a red error:
 
 ```
-🪙 ── Gap: Missing webhook retry logic ───────────
+🪙 ── Gap: Missing webhook retry logic ──────────────────────────────────
 
-  📍 Task 5 — Webhook handler
-  ❓ [T2] What happens when Stripe returns 502?
+   📍  Task 5 — Webhook handler
+   ❓  [T2] What happens when Stripe returns 502?
 
-  The spec says "handle errors" but doesn't specify
-  what "handle" means. In production, webhooks fail
-  2-5% of the time on transient errors.
+   The spec says "handle errors" but doesn't specify what "handle" means.
+   In production, webhooks fail 2-5% of the time on transient errors.
 
-  ⚠  RISK: Events silently dropped on transient failure
-  🔧 FIX:  Add exponential backoff retry (3 attempts)
-           + dead letter queue for persistent failures
+   ⚠  RISK:  Events silently dropped on transient failure
+   🔧 FIX:   Add exponential backoff retry (3 attempts)
+             + dead letter queue for persistent failures
 
-  Severity: ████░░░░░░ HIGH
-──────────────────────────────────────────────────
+   Severity: ████░░░░░░ HIGH
+─────────────────────────────────────────────────────────────────────────
 ```
 
 ### Classification Announcement
 
+Use a wide format. Right-align the progress bars and scores into a clean table. Keep descriptions short — one line per axis.
+
 ```
-╭──────────────────────────────────────────────╮
-│  🪙 SIZE CLASSIFICATION                      │
-│                                              │
-│  Verdict:  L  (Large)                        │
-│  Reason:   New feature, 3 integration points │
-│                                              │
-│  Blast radius   ███░  3/4  multi-service     │
-│  Reversibility  ██░░  2/4  mostly reversible │
-│  Domain risk    ████  4/4  auth/security     │
-│  Novelty        ██░░  2/4  known pattern     │
-│                                              │
-│  Total: 11/16 → L (bumped: domain risk = 4) │
-│                                              │
-│  Review depth: 15-25 questions               │
-│  Dimensions:   all 7                         │
-│  Unknowns:     yes                           │
-╰──────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────╮
+│  🪙 SIZE CLASSIFICATION                                              │
+│                                                                       │
+│  Verdict:   L (Large)                                                 │
+│  Reason:    New feature, 3 integration points, external service       │
+│                                                                       │
+│  Blast radius    ███░  3/4   new feature, new dependency, 3+ integs  │
+│  Reversibility   ██░░  2/4   mostly reversible, minor cleanup        │
+│  Domain risk     ████  4/4   auth / payments / security              │
+│  Novelty         ██░░  2/4   known pattern, first time in codebase   │
+│                                                                       │
+│  Total: 11/16 → L (bumped: domain risk = 4)                          │
+│                                                                       │
+│  Review depth:   15-25 questions                                      │
+│  Dimensions:     all 7                                                │
+│  Unknowns:       yes                                                  │
+╰───────────────────────────────────────────────────────────────────────╯
 ```
 
 ### Verdict Block (Final)
 
 ```
-╔══════════════════════════════════════════════╗
-║                                              ║
-║            🪙  HONE  REVIEW  COMPLETE        ║
-║                                              ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║  Spec:     auth-feature-plan.md              ║
-║  Size:     L (new feature, 3 integrations)   ║
-║                                              ║
-║  ┌─ QUESTIONS ─────────────────────────────┐ ║
-║  │                                         │ ║
-║  │  Total asked:       23                  │ ║
-║  │                                         │ ║
-║  │  T1 Clarification    ██░░░  5           │ ║
-║  │  T2 Gap              ████░  7           │ ║
-║  │  T3 Challenge        ██░░░  4           │ ║
-║  │  T4 Unknown Unknown  ██░░░  4           │ ║
-║  │  T5 Tradeoff         █░░░░  3           │ ║
-║  │                                         │ ║
-║  │  Answered:  21  ·  Deferred:  2         │ ║
-║  │  Unknown unknowns surfaced:  4          │ ║
-║  │                                         │ ║
-║  └─────────────────────────────────────────┘ ║
-║                                              ║
-║  ┌─ DIMENSIONS ────────────────────────────┐ ║
-║  │                                         │ ║
-║  │  Gap Analysis      3 seams  ██ H  █ M   │ ║
-║  │  Assumptions       2 seams  █ H   █ L   │ ║
-║  │  Complexity        1 seam   █ H         │ ║
-║  │  Scope             ✓ clean              │ ║
-║  │  Dependencies      1 seam        █ M    │ ║
-║  │  Testability       1 seam        █ M    │ ║
-║  │  Context           ✓ clean              │ ║
-║  │  Unknown Unknowns  4 seams  ██ H  ██ M  │ ║
-║  │                                         │ ║
-║  └─────────────────────────────────────────┘ ║
-║                                              ║
-║  Confidence: ████████░░  HIGH                ║
-║                                              ║
-║  ┌─────────────────────────────────────────┐ ║
-║  │                                         │ ║
-║  │   VERDICT:  🟡  NEEDS HONING            │ ║
-║  │                                         │ ║
-║  │   8 seams found · 3 high severity       │ ║
-║  │   Run /hone:sharpen to apply repairs    │ ║
-║  │                                         │ ║
-║  └─────────────────────────────────────────┘ ║
-║                                              ║
-╚══════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║                     🪙  HONE  REVIEW  COMPLETE                        ║
+║                                                                       ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║                                                                       ║
+║  Spec:       auth-feature-plan.md                                     ║
+║  Size:       L (new feature, 3 integration points)                    ║
+║                                                                       ║
+║  ┌─ QUESTIONS ───────────────────────────────────────────────────┐    ║
+║  │                                                               │    ║
+║  │  Total asked:          23                                     │    ║
+║  │                                                               │    ║
+║  │  T1 Clarification      ██░░░░░░░░   5                        │    ║
+║  │  T2 Gap                ████░░░░░░   7                        │    ║
+║  │  T3 Challenge          ██░░░░░░░░   4                        │    ║
+║  │  T4 Unknown Unknown    ██░░░░░░░░   4                        │    ║
+║  │  T5 Tradeoff           █░░░░░░░░░   3                        │    ║
+║  │                                                               │    ║
+║  │  Answered: 21  ·  Deferred: 2  ·  Unknowns surfaced: 4      │    ║
+║  │                                                               │    ║
+║  └───────────────────────────────────────────────────────────────┘    ║
+║                                                                       ║
+║  ┌─ DIMENSIONS ──────────────────────────────────────────────────┐    ║
+║  │                                                               │    ║
+║  │  Gap Analysis         3 seams    ██ high   █ medium           │    ║
+║  │  Assumptions          2 seams    █ high    █ low              │    ║
+║  │  Complexity           1 seam     █ high                       │    ║
+║  │  Scope                ✓ clean                                 │    ║
+║  │  Dependencies         1 seam              █ medium            │    ║
+║  │  Testability          1 seam              █ medium            │    ║
+║  │  Context              ✓ clean                                 │    ║
+║  │  Unknown Unknowns     4 seams    ██ high   ██ medium          │    ║
+║  │                                                               │    ║
+║  └───────────────────────────────────────────────────────────────┘    ║
+║                                                                       ║
+║  Confidence:  ████████░░  HIGH                                        ║
+║                                                                       ║
+║  ┌───────────────────────────────────────────────────────────────┐    ║
+║  │                                                               │    ║
+║  │   VERDICT:   🟡  NEEDS HONING                                 │    ║
+║  │                                                               │    ║
+║  │   8 seams found  ·  3 high severity                           │    ║
+║  │   Run /hone-sharpen to apply repairs                          │    ║
+║  │                                                               │    ║
+║  └───────────────────────────────────────────────────────────────┘    ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
 ```
 
 ### Verdict Badges
@@ -234,17 +278,15 @@ Use these exact badge formats for each verdict:
 When an anti-pattern is detected, call it out with a named box:
 
 ```
-╭─ ⚠ ANTI-PATTERN DETECTED ─────────────────────╮
-│                                                 │
-│  🏷  The Happy Path Only                        │
-│                                                 │
-│  This spec describes 6 tasks. All 6 describe    │
-│  success scenarios. Zero describe failure.       │
-│                                                 │
-│  Missing: error handling, retry logic, rollback, │
-│  timeout behavior, partial failure recovery.     │
-│                                                 │
-╰─────────────────────────────────────────────────╯
+╭─ ⚠ ANTI-PATTERN DETECTED ─────────────────────────────────────────────╮
+│                                                                        │
+│  🏷  The Happy Path Only                                               │
+│                                                                        │
+│  This spec describes 6 tasks. All 6 describe success scenarios.        │
+│  Zero describe failure. Missing: error handling, retry logic,          │
+│  rollback, timeout behavior, partial failure recovery.                 │
+│                                                                        │
+╰────────────────────────────────────────────────────────────────────────╯
 ```
 
 ### Review Progress (between questions)
