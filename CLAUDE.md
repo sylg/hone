@@ -128,20 +128,16 @@ Each dimension must follow the contract:
 ## Implementation Status
 
 - Phase 1 (Core Engine): ✅ COMPLETE
-- Phase 2 (Knowledge Expansion): Scaffolded — stubs only
-- Phase 3 (Composable Dimensions): Scaffolded — architecture defined, stubs only
-- Phase 4 (Non-Linear Loops): Scaffolded — stubs only
-- Phase 5 (Sharpen + Report): Scaffolded — stubs only
+- Phase 2 (Knowledge Expansion): ✅ COMPLETE
+- Phase 3 (Composable Dimensions): ✅ COMPLETE — all 10 dimensions
+- Phase 4 (Non-Linear Loops): Stub — replan protocol needed
+- Phase 5 (Sharpen + Report): ✅ COMPLETE
 - Phase 6 (Settings + Config): Not started
 
 ## TODOs
 
 - [ ] Settings system (`.hone/config.json`, model selection, dimension preferences)
-- [ ] Dimension recommendation engine (in SKILL.md, after core review)
-- [ ] Write Phase 2: `reference/unknown-unknowns.md` full content
-- [ ] Write Phase 3: all optional dimension reference files
 - [ ] Write Phase 4: `reference/replan-protocol.md` full content
-- [ ] Write Phase 5: sharpen, diff, report commands + agents
 - [ ] Code simplicity dimension (new)
 - [ ] Data quality dimension (new)
 - [ ] End-to-end test in fresh session with all fixtures
