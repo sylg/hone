@@ -324,7 +324,14 @@ Between questions, show a single compact progress line:
 
 When invoked with a spec/plan:
 
-### Phase 0: Classify Size
+### Phase 0: Prior Reviews + Classify Size
+
+**Before classifying**, check if `docs/hone/` exists and contains any previous review reports. If it does, scan the filenames and read any that seem related to the current spec. Use past reviews to:
+- Avoid re-asking questions that were already answered (state the known answer instead)
+- Reference past decisions ("In the March review, you accepted the webhook signature risk — is that still the case?")
+- Note if a past finding was supposed to be addressed ("The last review flagged missing error handling — has that been added?")
+
+If no prior reviews exist, proceed normally.
 
 Read `reference/size-calibration.md`. Determine the task size (S/M/L/XL) based on blast radius, reversibility, domain risk, and novelty. Display the classification using the Classification Announcement format above.
 
