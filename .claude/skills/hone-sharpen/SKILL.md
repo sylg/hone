@@ -149,7 +149,7 @@ AskUserQuestion({
     question: "The spec has been sharpened with 4 repairs. What would you like to do?",
     options: [
       { label: "Quick re-review", description: "Run a fast Size S scan to verify the repairs look right" },
-      { label: "Generate report", description: "Save a full review report to docs/hone/" },
+      { label: "Generate report", description: "Save a full review report to .hone/reports/" },
       { label: "Done", description: "The spec is ready — proceed to implementation" }
     ],
     multiSelect: false

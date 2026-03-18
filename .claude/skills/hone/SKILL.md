@@ -326,7 +326,7 @@ When invoked with a spec/plan:
 
 ### Phase 0: Prior Reviews + Classify Size
 
-**Before classifying**, check if `docs/hone/` exists and contains any previous review reports. If it does, scan the filenames and read any that seem related to the current spec. Use past reviews to:
+**Before classifying**, check if `.hone/reports/` exists and contains any previous review reports. If it does, scan the filenames and read any that seem related to the current spec. Use past reviews to:
 - Avoid re-asking questions that were already answered (state the known answer instead)
 - Reference past decisions ("In the March review, you accepted the webhook signature risk — is that still the case?")
 - Note if a past finding was supposed to be addressed ("The last review flagged missing error handling — has that been added?")

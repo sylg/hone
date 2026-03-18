@@ -1,4 +1,4 @@
-# Hone review state (local)
+# Hone review state (local by default — remove this line to commit reports)
 .hone/
 
 # Test sandbox (real specs, not committed)

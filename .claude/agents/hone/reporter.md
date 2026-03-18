@@ -22,7 +22,7 @@ You will receive:
 
 ## Output
 
-Generate a markdown file following the report structure defined in the `/hone-report` skill. Save to `docs/hone/YYYY-MM-DD-{spec-name}-review.md`.
+Generate a markdown file following the report structure defined in the `/hone-report` skill. Save to `.hone/reports/YYYY-MM-DD-{spec-name}-review.md`.
 
 ## Rules
 

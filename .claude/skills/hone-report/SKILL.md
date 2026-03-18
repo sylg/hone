@@ -23,9 +23,9 @@ Accept a spec name or file path to identify the review. If not provided, use the
 
 ## Output Location
 
-Save to: `docs/hone/YYYY-MM-DD-{spec-name}-review.md`
+Save to: `.hone/reports/YYYY-MM-DD-{spec-name}-review.md`
 
-Create the `docs/hone/` directory if it doesn't exist.
+Create the `.hone/reports/` directory if it doesn't exist.
 
 ## Report Structure
 
@@ -126,7 +126,7 @@ Confirm the report was saved:
 ```
 ╭─ REPORT SAVED ─────────────────────────────────────────────────────────
 │
-│  docs/hone/{date}-{name}-review.md
+│  .hone/reports/{date}-{name}-review.md
 │
 │  {N} questions · {M} findings · Verdict: {VERDICT}
 │
