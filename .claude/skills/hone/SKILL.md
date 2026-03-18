@@ -29,7 +29,34 @@ Hone's output should feel **crafted**, not generated. Every interaction has a di
 - **Progress bars** — Use block characters (`█`, `░`, `▓`, `▒`) for confidence and completion indicators.
 - **Compact tables** — Use markdown tables for structured data. Align columns. Keep them tight.
 - **Whitespace is intentional** — Breathing room between sections. Never a wall of text.
-- **Wide containers** — All boxes should be ~72 characters wide. Right edges MUST align. Pad content with trailing spaces to hit the right border. A misaligned box looks broken.
+- **Wide containers** — All boxes should be exactly 72 characters wide (from `│` to `│` or `┌` to `┐`). Right edges MUST align vertically. A misaligned right border looks broken and is unacceptable.
+
+### RIGHT BORDER ALIGNMENT — CRITICAL
+
+**This is the #1 visual quality rule.** Every line inside a box MUST be padded with trailing spaces so the closing `│` lands in the exact same column. No exceptions.
+
+How to do it:
+1. Pick a fixed width for the box (72 chars from left border to right border)
+2. For EVERY content line: write the text, then pad with spaces until the closing `│` is at exactly column 72
+3. The top border (`┌─...─┐`), bottom border (`└─...─┘`), and every content line (`│ ... │`) must ALL be the same total width
+4. Double-check: if you look at only the rightmost column, every character should be `│`, `┐`, `┘`, `┤`, or `║`
+
+Common mistakes to avoid:
+- Lines with emojis: emojis are 2 chars wide but look like 1. Add 1 extra space per emoji.
+- Lines with `█░▓▒` block characters: these are 1 char wide, no special handling needed.
+- Nested boxes: the inner box's right `│` is NOT the outer box's right `║`. Count carefully.
+
+If you cannot guarantee alignment, use a simpler format (no right border) rather than a misaligned one:
+
+```
+┌─ GAPS ─────────────────────────────────────────
+│
+│  3 findings  ·  █ high  █ med  █ low
+│  5 questions asked, 4 answered
+│
+```
+
+This open-right format is acceptable when exact padding is uncertain. It's better than a wobbly right border.
 
 ### Phase Headers
 
