@@ -1,6 +1,10 @@
 # Hone review state (local)
 .hone/
 
+# Test sandbox (real specs, not committed)
+tests/sandbox/*
+!tests/sandbox/.gitkeep
+
 # OS
 .DS_Store
 

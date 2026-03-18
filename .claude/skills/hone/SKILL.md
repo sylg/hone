@@ -158,13 +158,7 @@ After receiving an answer and before asking the next question, output a brief te
 
 ### Dimension Scorecard (inline during review)
 
-After completing a dimension, show a mini-scorecard:
-
-```
-┌─ GAP ANALYSIS ─────────────────────────────────────────────────────────┐
-│  Seams found: 3  (██ high  █ medium)   Questions: 5 asked, 4 answered │
-└────────────────────────────────────────────────────────────────────────┘
-```
+After completing a dimension, show a mini-scorecard as part of the milestone chain (see Review Progress below). Do NOT use a standalone box — it's part of the chain.
 
 ### Finding Format (Kintsugi Seam)
 
@@ -239,14 +233,14 @@ Use a wide format. Right-align the progress bars and scores into a clean table. 
 ║                                                                       ║
 ║  ┌─ DIMENSIONS ──────────────────────────────────────────────────┐    ║
 ║  │                                                               │    ║
-║  │  Gap Analysis         3 seams    ██ high   █ medium           │    ║
-║  │  Assumptions          2 seams    █ high    █ low              │    ║
+║  │  Gap Analysis         3 findings    ██ high   █ medium           │    ║
+║  │  Assumptions          2 findings    █ high    █ low              │    ║
 ║  │  Complexity           1 seam     █ high                       │    ║
 ║  │  Scope                ✓ clean                                 │    ║
 ║  │  Dependencies         1 seam              █ medium            │    ║
 ║  │  Testability          1 seam              █ medium            │    ║
 ║  │  Context              ✓ clean                                 │    ║
-║  │  Unknown Unknowns     4 seams    ██ high   ██ medium          │    ║
+║  │  Unknown Unknowns     4 findings    ██ high   ██ medium          │    ║
 ║  │                                                               │    ║
 ║  └───────────────────────────────────────────────────────────────┘    ║
 ║                                                                       ║
@@ -256,7 +250,7 @@ Use a wide format. Right-align the progress bars and scores into a clean table. 
 ║  │                                                               │    ║
 ║  │   VERDICT:   🟡  NEEDS HONING                                 │    ║
 ║  │                                                               │    ║
-║  │   8 seams found  ·  3 high severity                           │    ║
+║  │   8 findings found  ·  3 high severity                           │    ║
 ║  │   Run /hone-sharpen to apply repairs                          │    ║
 ║  │                                                               │    ║
 ║  └───────────────────────────────────────────────────────────────┘    ║
@@ -291,11 +285,10 @@ When an anti-pattern is detected, call it out with a named box:
 
 ### Review Progress (between questions)
 
-Show a compact progress indicator so the developer knows where they are:
+Between questions, show a single compact progress line:
 
 ```
-  Review ████████░░░░░░░░░░░░  42%
-  Phase 2 of 4 · Dimension: Gap Analysis · Q 8/~20
+  🪙 Gaps ❯ Q 4/~8  ████████░░░░░░░░░░░░  42%
 ```
 
 ### Rules
@@ -325,34 +318,79 @@ The user can override: "treat this as XL" or "just do a quick scan."
 
 ### Phase 1: Recommend Dimensions
 
-After sizing, do a quick scan of the spec to detect signals, then recommend a review plan. Use `AskUserQuestion` with `multiSelect: true` to let the user edit the plan:
+After sizing, explain what will happen, then recommend a review plan. BEFORE showing the `AskUserQuestion`, output a plain-text explanation of the dimensions — what each one does and why you're recommending it:
+
+```
+╭───────────────────────────────────────────────────────────────────────╮
+│  🪙 REVIEW PLAN                                                      │
+│                                                                       │
+│  Every review runs two core checks:                                   │
+│                                                                       │
+│  ✦ Gaps — Find what's missing: error handling, edge cases,           │
+│    rollback logic, unspecified contracts                               │
+│  ✦ Assumptions — Surface what must be true but isn't stated:         │
+│    environment, data, dependencies, ordering                          │
+│                                                                       │
+│  Based on your spec, I also recommend:                                │
+│                                                                       │
+│  ✦ Context — "Could a fresh dev execute this without asking           │
+│    questions?" Your tasks are just titles — no file paths,            │
+│    no implementation detail.                                          │
+│  ✦ Testability — Several success criteria are vague ("it works").    │
+│    I'll suggest concrete verification steps.                          │
+│                                                                       │
+│  Other dimensions available (not recommended for this spec):          │
+│  · Complexity · Scope · Dependencies · Unknown Unknowns               │
+│  · Code Simplicity · Data Quality                                     │
+│                                                                       │
+╰───────────────────────────────────────────────────────────────────────╯
+```
+
+Then use `AskUserQuestion` with `multiSelect: true` to let the user edit the plan. Options should include the recommended dimensions plus "Skip optional":
 
 ```
 AskUserQuestion({
   questions: [{
     header: "🪙 Review Plan",
-    question: "Based on the spec size (L) and content, I recommend this deep review. Select the dimensions you want to run (core dimensions always run):",
+    question: "Core dimensions (Gaps + Assumptions) always run. Which optional checks do you want to add?",
     options: [
-      { label: "Testability", description: "Several tasks have vague success criteria" },
-      { label: "Complexity", description: "Task 5 looks like a God Task" },
-      { label: "Unknown Unknowns", description: "Payments domain — common gotchas to surface" },
-      { label: "Skip optional", description: "Run only core dimensions (Gap + Assumptions)" }
+      { label: "Context", description: "Check if a fresh dev/agent could execute without asking questions (Recommended)" },
+      { label: "Testability", description: "Check if every task has concrete, verifiable success criteria (Recommended)" },
+      { label: "More dimensions...", description: "See all: Complexity, Scope, Dependencies, Unknowns, Simplicity, Data Quality" },
+      { label: "Skip optional", description: "Run only Gaps + Assumptions" }
     ],
     multiSelect: true
   }]
 })
 ```
 
+If the user selects "More dimensions...", show a second `AskUserQuestion` with the full list.
+
+#### Dimension descriptions (use in explanations)
+
+| Dimension | What it does |
+|-----------|-------------|
+| **Gaps** | Finds what's missing — error handling, edge cases, rollback, validation, observability |
+| **Assumptions** | Surfaces what must be true but isn't stated — env, data, deps, ordering |
+| **Context** | Tests if a fresh dev/agent could execute without asking questions |
+| **Testability** | Checks if "done" is defined concretely for every task |
+| **Complexity** | Finds tasks that are actually multiple tasks, glossed-over integrations |
+| **Scope** | Compares tasks against original intent, finds "while we're at it" creep |
+| **Dependencies** | Maps task ordering, finds missing prerequisites, parallelization |
+| **Unknown Unknowns** | Surfaces domain-specific gotchas the developer didn't know to ask about |
+| **Code Simplicity** | Flags premature abstractions, over-engineering, YAGNI violations |
+| **Data Quality** | Reviews schema design, constraints, migration safety, data integrity |
+
 #### Recommendation signals
 
 | Dimension | Recommend when... |
 |-----------|-------------------|
 | Unknown unknowns | L/XL size, or unfamiliar domain detected |
-| Complexity audit | God Task anti-pattern, or tasks with buried sub-tasks |
-| Scope creep | Scope Balloon anti-pattern, or task count > 8 |
-| Dependency check | Multi-phase specs, explicit ordering, or 5+ tasks |
+| Complexity | God Task anti-pattern, or tasks with buried sub-tasks |
+| Scope | Scope Balloon anti-pattern, or task count > 8 |
+| Dependencies | Multi-phase specs, explicit ordering, or 5+ tasks |
 | Testability | Untestable Task anti-pattern, or vague success criteria |
-| Context completeness | Spec is a handoff doc, or agent-targeted execution |
+| Context | Spec is a handoff doc, agent-targeted, or tasks lack detail |
 | Code simplicity | Code-heavy specs, refactoring tasks |
 | Data quality | Data model changes, ERD/schema specs, migrations |
 
@@ -360,22 +398,6 @@ For Size S: skip recommendations, run quick scan only.
 For Size M: recommend at most 1 optional dimension.
 For Size L: recommend 2-4 based on signals.
 For Size XL: recommend all applicable, use subagents to run in parallel.
-
-After the user confirms the plan, show the Review Dashboard:
-
-```
-╭───────────────────────────────────────────────────────────────────────╮
-│  🪙 REVIEW PLAN                                                      │
-│                                                                       │
-│  ○  Gap Analysis          (core)                                      │
-│  ○  Assumptions           (core)                                      │
-│  ○  Testability           (selected)                                  │
-│  ○  Complexity            (selected)                                  │
-│  ○  Unknown Unknowns      (selected)                                  │
-│                                                                       │
-│  Estimated questions: 15-20                                           │
-╰───────────────────────────────────────────────────────────────────────╯
-```
 
 ### Phase 2: Run Dimensions
 
@@ -399,28 +421,40 @@ When the developer answers a question, three things can happen:
 The developer can skip any dimension. Apply skip protection (see above).
 The developer can skip individual questions. Apply skip protection (see above).
 
-Show the Review Progress bar between questions:
+Show the progress line between questions:
 
 ```
-  Review ████████░░░░░░░░░░░░  42%
-  Dimension: Gap Analysis (1/5) · Q 4/~8
+  🪙 Gaps ❯ Q 4/~8  ████████░░░░░░░░░░░░  42%
 ```
 
-Update the Review Dashboard as dimensions complete:
+After each dimension completes, show the **Milestone Chain** — a visual pipeline of connected dimension blocks showing the journey through the review. Each completed dimension gets a full summary. Pending ones show as empty:
 
 ```
-╭───────────────────────────────────────────────────────────────────────╮
-│  🪙 REVIEW PROGRESS                                                  │
-│                                                                       │
-│  ✅  Gap Analysis          3 seams   ██ high  █ med     5 questions   │
-│  ✅  Assumptions           2 seams   █ high   █ low     4 questions   │
-│  ●   Testability           ...running                                 │
-│  ○  Complexity             pending                                    │
-│  ○  Unknown Unknowns       pending                                    │
-│                                                                       │
-│  Total seams so far: 5  ·  Questions: 9 asked, 8 answered            │
-╰───────────────────────────────────────────────────────────────────────╯
+┌───────────────────────────────────────────────────────────────────────┐
+│  ✅ GAPS                                                              │
+│  Found what's missing from the spec                                   │
+│  3 findings  ·  █ high  █ med  █ low  ·  5 questions                  │
+├───────────────────────────────────────────────────────────────────────┤
+│  ✅ ASSUMPTIONS                                                       │
+│  Surfaced what must be true but isn't stated                          │
+│  2 findings  ·  █ high  █ low  ·  4 questions                         │
+├───────────────────────────────────────────────────────────────────────┤
+│  ▶ TESTABILITY                                                       │
+│  Checking if "done" is defined concretely...                          │
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
+│  ○ CONTEXT                                                            │
+│  Can a fresh dev execute without asking questions?                     │
+├───────────────────────────────────────────────────────────────────────┤
+│  Total: 5 findings  ·  9 questions asked, 8 answered                  │
+│  Progress ██████████░░░░░░░░░░  50%                                   │
+└───────────────────────────────────────────────────────────────────────┘
 ```
+
+Use these status markers:
+- `✅` — completed
+- `▶` — currently running
+- `○` — pending
+- `⚠` — skipped
 
 ### Living Spec Markup
 
@@ -431,7 +465,7 @@ Display the spec's task list with inline annotations:
 ```
 ╭───────────────────────────────────────────────────────────────────────╮
 │  🪙 SPEC MARKUP — Stripe Payment Integration                        │
-│  5 seams found · 2 dimensions complete                                │
+│  5 findings found · 2 dimensions complete                                │
 │                                                                       │
 │  Task 1: Add Stripe SDK                                               │
 │  └─ ✓ clean                                                          │
@@ -458,13 +492,22 @@ Display the spec's task list with inline annotations:
 │  Task 6: Update UI                                                    │
 │  └─ ✓ clean                                                          │
 │                                                                       │
-│  ─── LEARNINGS SO FAR ─────────────────────────────────────────────── │
 │                                                                       │
-│  1. Stripe error catalog needs research before implementation         │
-│  2. Success page must verify session via Stripe API, not trust        │
-│     the redirect alone                                                │
-│  3. Webhook needs signature verification (risk accepted for v1)       │
-│  4. Cancel + failure redirect URLs to be added                        │
+│  ╔═══════════════════════════════════════════════════════════════════╗ │
+│  ║  💡 KEY LEARNINGS                                                ║ │
+│  ╠═══════════════════════════════════════════════════════════════════╣ │
+│  ║                                                                   ║ │
+│  ║  1. Stripe error catalog needs research before implementation     ║ │
+│  ║                                                                   ║ │
+│  ║  2. Success page must verify session via Stripe API — don't       ║ │
+│  ║     trust the redirect alone (race condition)                     ║ │
+│  ║                                                                   ║ │
+│  ║  3. ⚠ Webhook signature verification skipped for v1               ║ │
+│  ║     (critical risk accepted)                                      ║ │
+│  ║                                                                   ║ │
+│  ║  4. Cancel + failure redirect URLs to be added                    ║ │
+│  ║                                                                   ║ │
+│  ╚═══════════════════════════════════════════════════════════════════╝ │
 │                                                                       │
 ╰───────────────────────────────────────────────────────────────────────╯
 ```
@@ -475,7 +518,7 @@ Display the spec's task list with inline annotations:
 2. **Annotations accumulate** — each dimension adds its findings to the markup
 3. **Include developer decisions** — "chose: needs research", "confirmed: yes"
 4. **Mark accepted risks prominently** — `⚠ RISK ACCEPTED` for critical/high dismissals
-5. **Learnings section updates** — short numbered list of key takeaways so far
+5. **Learnings section is visually prominent** — use a double-border box (`╔═╗`) with `💡 KEY LEARNINGS` header. Each learning gets its own line with breathing room. Accepted risks get a `⚠` prefix.
 6. **Clean tasks are marked** — `✓ clean` so the developer sees what's fine too
 7. **Annotations can evolve** — if a later dimension contradicts or extends an earlier finding, update the annotation
 
@@ -493,12 +536,12 @@ Based on verdict:
 
 **NEEDS HONING**: Show the final Living Spec Markup with all annotations. Then offer to sharpen:
 
-"The review found [N] seams across [M] dimensions. Run `/hone-sharpen` to apply all repairs to the spec?"
+"The review found [N] findings across [M] dimensions. Run `/hone-sharpen` to apply all repairs to the spec?"
 
 If yes, apply ALL repairs in bulk:
 - Use the accumulated findings and developer decisions to rewrite the spec
 - Mark every change with `<!-- 🪙 HONED: [description] -->`
-- Add the review header: `<!-- Hone Review: [N] questions asked, [M] answered, [K] seams found -->`
+- Add the review header: `<!-- Hone Review: [N] questions asked, [M] answered, [K] findings found -->`
 - Show the kintsugi diff (before/after)
 
 **ROUGH EDGE**: Generate a Replan Brief (`reference/replan-protocol.md`). The brief tells the planning agent exactly what to preserve, what to rethink, and why.
