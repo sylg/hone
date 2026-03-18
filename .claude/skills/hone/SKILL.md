@@ -24,7 +24,13 @@ Hone's output should feel **crafted**, not generated. Every interaction has a di
 
 ### Design Language
 
-- **Gold on stone** — The 🪙 emoji is the brand mark. Use it sparingly but consistently: findings, verdicts, phase headers.
+- **🪙 is rare** — The 🪙 emoji appears in exactly TWO places: the final verdict header (`🪙 HONE REVIEW COMPLETE`) and the sharpen offer. Nowhere else. No phase headers, no finding lines, no progress indicators.
+- **Severity colors** — Use colored square emojis for severity throughout:
+  - 🟥 critical
+  - 🟠 high
+  - 🟡 medium
+  - 🔵 low
+  These appear on finding annotations in the spec markup, milestone chain summaries, and the verdict dimensions table. The color does the work — no additional shape needed.
 - **Box drawing** — Use Unicode box-drawing characters (`─`, `│`, `┌`, `┐`, `└`, `┘`, `├`, `┤`, `┬`, `┴`, `╭`, `╯`) for frames and containers. Never plain `---` dividers.
 - **Progress bars** — Use block characters (`█`, `░`, `▓`, `▒`) for confidence and completion indicators.
 - **Compact tables** — Use markdown tables for structured data. Align columns. Keep them tight.
@@ -179,20 +185,19 @@ AskUserQuestion({
 After receiving an answer and before asking the next question, output a brief text progress line:
 
 ```
-  Review ████████░░░░░░░░░░░░  42%
-  Phase 2 of 4 · Dimension: Gap Analysis · Q 8/~20
+  Gaps ❯ Q 4/~8  ████████░░░░░░░░░░░░  42%
 ```
 
 ### Dimension Scorecard (inline during review)
 
 After completing a dimension, show a mini-scorecard as part of the milestone chain (see Review Progress below). Do NOT use a standalone box — it's part of the chain.
 
-### Finding Format (Kintsugi Seam)
+### Finding Format
 
-Each finding is a gold seam — not a red error:
+Each finding uses the severity color as its marker — not 🪙:
 
 ```
-🪙 ── Gap: Missing webhook retry logic ──────────────────────────────────
+🟠 ── Gap: Missing webhook retry logic ─────────────────────────────────
 
    📍  Task 5 — Webhook handler
    ❓  [T2] What happens when Stripe returns 502?
@@ -203,10 +208,10 @@ Each finding is a gold seam — not a red error:
    ⚠  RISK:  Events silently dropped on transient failure
    🔧 FIX:   Add exponential backoff retry (3 attempts)
              + dead letter queue for persistent failures
-
-   Severity: ████░░░░░░ HIGH
 ─────────────────────────────────────────────────────────────────────────
 ```
+
+The severity color (`🟥` / `🟠` / `🟡` / `🔵`) replaces both the 🪙 marker and the `Severity:` bar.
 
 ### Classification Announcement
 
@@ -234,55 +239,47 @@ Use a wide format. Right-align the progress bars and scores into a clean table. 
 
 ### Verdict Block (Final)
 
+Use open-right format for the verdict to avoid alignment issues:
+
 ```
-╔═══════════════════════════════════════════════════════════════════════╗
-║                                                                       ║
-║                     🪙  HONE  REVIEW  COMPLETE                        ║
-║                                                                       ║
-╠═══════════════════════════════════════════════════════════════════════╣
-║                                                                       ║
-║  Spec:       auth-feature-plan.md                                     ║
-║  Size:       L (new feature, 3 integration points)                    ║
-║                                                                       ║
-║  ┌─ QUESTIONS ───────────────────────────────────────────────────┐    ║
-║  │                                                               │    ║
-║  │  Total asked:          23                                     │    ║
-║  │                                                               │    ║
-║  │  T1 Clarification      ██░░░░░░░░   5                        │    ║
-║  │  T2 Gap                ████░░░░░░   7                        │    ║
-║  │  T3 Challenge          ██░░░░░░░░   4                        │    ║
-║  │  T4 Unknown Unknown    ██░░░░░░░░   4                        │    ║
-║  │  T5 Tradeoff           █░░░░░░░░░   3                        │    ║
-║  │                                                               │    ║
-║  │  Answered: 21  ·  Deferred: 2  ·  Unknowns surfaced: 4      │    ║
-║  │                                                               │    ║
-║  └───────────────────────────────────────────────────────────────┘    ║
-║                                                                       ║
-║  ┌─ DIMENSIONS ──────────────────────────────────────────────────┐    ║
-║  │                                                               │    ║
-║  │  Gap Analysis         3 findings    ██ high   █ medium           │    ║
-║  │  Assumptions          2 findings    █ high    █ low              │    ║
-║  │  Complexity           1 seam     █ high                       │    ║
-║  │  Scope                ✓ clean                                 │    ║
-║  │  Dependencies         1 seam              █ medium            │    ║
-║  │  Testability          1 seam              █ medium            │    ║
-║  │  Context              ✓ clean                                 │    ║
-║  │  Unknown Unknowns     4 findings    ██ high   ██ medium          │    ║
-║  │                                                               │    ║
-║  └───────────────────────────────────────────────────────────────┘    ║
-║                                                                       ║
-║  Confidence:  ████████░░  HIGH                                        ║
-║                                                                       ║
-║  ┌───────────────────────────────────────────────────────────────┐    ║
-║  │                                                               │    ║
-║  │   VERDICT:   🟡  NEEDS HONING                                 │    ║
-║  │                                                               │    ║
-║  │   8 findings found  ·  3 high severity                           │    ║
-║  │   Run /hone-sharpen to apply repairs                          │    ║
-║  │                                                               │    ║
-║  └───────────────────────────────────────────────────────────────┘    ║
-║                                                                       ║
-╚═══════════════════════════════════════════════════════════════════════╝
+╔═ 🪙 HONE REVIEW COMPLETE ═════════════════════════════════════════════
+║
+║  Spec:       auth-feature-plan.md
+║  Size:       L (new feature, 3 integration points)
+║
+║  ┌─ QUESTIONS ─────────────────────────────────────────────
+║  │
+║  │  Total asked:          23
+║  │
+║  │  T1 Clarification      ░░░░░░░░░░   0
+║  │  T2 Gap                ████░░░░░░   7
+║  │  T3 Challenge          ██░░░░░░░░   4
+║  │  T4 Unknown Unknown    ██░░░░░░░░   4
+║  │  T5 Tradeoff           █░░░░░░░░░   3
+║  │
+║  │  Answered: 21  ·  Deferred: 2  ·  Unknowns surfaced: 4
+║  │
+║  ┌─ DIMENSIONS ────────────────────────────────────────────
+║  │
+║  │  Gaps              3 findings    🟠 2 high  🟡 1 med
+║  │  Assumptions       2 findings    🟠 1 high  🔵 1 low
+║  │  Complexity        1 finding     🟠 1 high
+║  │  Scope             ✓ clean
+║  │  Dependencies      1 finding     🟡 1 med
+║  │  Testability       1 finding     🟡 1 med
+║  │  Context           ✓ clean
+║  │  Unknowns          4 findings    🟠 2 high  🟡 2 med
+║  │
+║  Confidence:  ████████░░  HIGH
+║
+║  ┌─ VERDICT ───────────────────────────────────────────────
+║  │
+║  │   🟡  NEEDS HONING
+║  │
+║  │   12 findings  ·  🟠 6 high  🟡 4 med  🔵 2 low
+║  │   Run /hone-sharpen to apply 🪙 repairs
+║  │
+╚════════════════════════════════════════════════════════════════════════
 ```
 
 ### Verdict Badges
@@ -299,15 +296,12 @@ Use these exact badge formats for each verdict:
 When an anti-pattern is detected, call it out with a named box:
 
 ```
-╭─ ⚠ ANTI-PATTERN DETECTED ─────────────────────────────────────────────╮
-│                                                                        │
-│  🏷  The Happy Path Only                                               │
-│                                                                        │
-│  This spec describes 6 tasks. All 6 describe success scenarios.        │
-│  Zero describe failure. Missing: error handling, retry logic,          │
-│  rollback, timeout behavior, partial failure recovery.                 │
-│                                                                        │
-╰────────────────────────────────────────────────────────────────────────╯
+╭─ ⚠ ANTI-PATTERN: The Happy Path Only ─────────────────────────────────
+│
+│  This spec describes 6 tasks. All 6 describe success scenarios.
+│  Zero describe failure. Missing: error handling, retry logic,
+│  rollback, timeout behavior, partial failure recovery.
+│
 ```
 
 ### Review Progress (between questions)
@@ -315,7 +309,7 @@ When an anti-pattern is detected, call it out with a named box:
 Between questions, show a single compact progress line:
 
 ```
-  🪙 Gaps ❯ Q 4/~8  ████████░░░░░░░░░░░░  42%
+  Gaps ❯ Q 4/~8  ████████░░░░░░░░░░░░  42%
 ```
 
 ### Rules
@@ -451,30 +445,30 @@ The developer can skip individual questions. Apply skip protection (see above).
 Show the progress line between questions:
 
 ```
-  🪙 Gaps ❯ Q 4/~8  ████████░░░░░░░░░░░░  42%
+  Gaps ❯ Q 4/~8  ████████░░░░░░░░░░░░  42%
 ```
 
-After each dimension completes, show the **Milestone Chain** — a visual pipeline of connected dimension blocks showing the journey through the review. Each completed dimension gets a full summary. Pending ones show as empty:
+After each dimension completes, show the **Milestone Chain** — a visual pipeline of connected dimension blocks. Use open-right format to avoid alignment issues:
 
 ```
-┌───────────────────────────────────────────────────────────────────────┐
-│  ✅ GAPS                                                              │
-│  Found what's missing from the spec                                   │
-│  3 findings  ·  █ high  █ med  █ low  ·  5 questions                  │
-├───────────────────────────────────────────────────────────────────────┤
-│  ✅ ASSUMPTIONS                                                       │
-│  Surfaced what must be true but isn't stated                          │
-│  2 findings  ·  █ high  █ low  ·  4 questions                         │
-├───────────────────────────────────────────────────────────────────────┤
-│  ▶ TESTABILITY                                                       │
-│  Checking if "done" is defined concretely...                          │
-├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤
-│  ○ CONTEXT                                                            │
-│  Can a fresh dev execute without asking questions?                     │
-├───────────────────────────────────────────────────────────────────────┤
-│  Total: 5 findings  ·  9 questions asked, 8 answered                  │
-│  Progress ██████████░░░░░░░░░░  50%                                   │
-└───────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────
+│  ✅ GAPS
+│  Found what's missing from the spec
+│  3 findings  (🟠 1 high  🟡 1 med  🔵 1 low)  ·  5 questions
+├───────────────────────────────────────────────────────────────
+│  ✅ ASSUMPTIONS
+│  Surfaced what must be true but isn't stated
+│  2 findings  (🟠 1 high  🔵 1 low)  ·  4 questions
+├───────────────────────────────────────────────────────────────
+│  ▶ TESTABILITY
+│  Checking if "done" is defined concretely...
+├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+│  ○ CONTEXT
+│  Can a fresh dev execute without asking questions?
+├───────────────────────────────────────────────────────────────
+│  Total: 5 findings  ·  9 questions asked, 8 answered
+│  Progress ██████████░░░░░░░░░░  50%
+└───────────────────────────────────────────────────────────────
 ```
 
 Use these status markers:
@@ -490,53 +484,48 @@ Use these status markers:
 Display the spec's task list with inline annotations:
 
 ```
-╭───────────────────────────────────────────────────────────────────────╮
-│  🪙 SPEC MARKUP — Stripe Payment Integration                        │
-│  5 findings found · 2 dimensions complete                                │
-│                                                                       │
-│  Task 1: Add Stripe SDK                                               │
-│  └─ ✓ clean                                                          │
-│                                                                       │
-│  Task 2: Create checkout session endpoint                             │
-│  ├─ 🪙 Missing error handling for 402/429/500  [GAP · HIGH]          │
-│  │  → Developer chose: needs research                                 │
-│  └─ 🪙 Assumes price IDs exist in Stripe  [ASSUMPTION · MED]        │
-│     → Developer confirmed: yes, pre-configured                        │
-│                                                                       │
-│  Task 3: Redirect to Stripe Checkout                                  │
-│  └─ 🪙 No cancel/failure redirect URLs  [GAP · HIGH]                │
-│     → Developer chose: add both cancel + failure                      │
-│                                                                       │
-│  Task 4: Handle success redirect                                      │
-│  └─ 🪙 Race condition: redirect before webhook  [GAP · HIGH]        │
-│     → Developer chose: verify session server-side                     │
-│                                                                       │
-│  Task 5: Handle webhook                                               │
-│  ├─ 🪙 No signature verification  [GAP · CRITICAL · ⚠ RISK ACCEPTED]│
-│  └─ 🪙 Only handles completed event  [GAP · MED]                    │
-│     → Developer chose: needs research                                 │
-│                                                                       │
-│  Task 6: Update UI                                                    │
-│  └─ ✓ clean                                                          │
-│                                                                       │
-│                                                                       │
-│  ╔═══════════════════════════════════════════════════════════════════╗ │
-│  ║  💡 KEY LEARNINGS                                                ║ │
-│  ╠═══════════════════════════════════════════════════════════════════╣ │
-│  ║                                                                   ║ │
-│  ║  1. Stripe error catalog needs research before implementation     ║ │
-│  ║                                                                   ║ │
-│  ║  2. Success page must verify session via Stripe API — don't       ║ │
-│  ║     trust the redirect alone (race condition)                     ║ │
-│  ║                                                                   ║ │
-│  ║  3. ⚠ Webhook signature verification skipped for v1               ║ │
-│  ║     (critical risk accepted)                                      ║ │
-│  ║                                                                   ║ │
-│  ║  4. Cancel + failure redirect URLs to be added                    ║ │
-│  ║                                                                   ║ │
-│  ╚═══════════════════════════════════════════════════════════════════╝ │
-│                                                                       │
-╰───────────────────────────────────────────────────────────────────────╯
+╭─ SPEC MARKUP — Stripe Payment Integration ─────────────────────────────
+│  5 findings · 2 dimensions complete
+│
+│  Task 1: Add Stripe SDK
+│  └─ ✓ clean
+│
+│  Task 2: Create checkout session endpoint
+│  ├─ 🟠 Missing error handling for 402/429/500
+│  │  → Developer chose: needs research
+│  └─ 🟡 Assumes price IDs exist in Stripe
+│     → Developer confirmed: yes, pre-configured
+│
+│  Task 3: Redirect to Stripe Checkout
+│  └─ 🟠 No cancel/failure redirect URLs
+│     → Developer chose: add both cancel + failure
+│
+│  Task 4: Handle success redirect
+│  └─ 🟠 Race condition: redirect before webhook
+│     → Developer chose: verify session server-side
+│
+│  Task 5: Handle webhook
+│  ├─ 🟥 No signature verification  ⚠ RISK ACCEPTED
+│  └─ 🟡 Only handles completed event
+│     → Developer chose: needs research
+│
+│  Task 6: Update UI
+│  └─ ✓ clean
+│
+│  ╔═ 💡 KEY LEARNINGS ═════════════════════════════════════════════════
+│  ║
+│  ║  1. Stripe error catalog needs research before implementation
+│  ║
+│  ║  2. Success page must verify session via Stripe API — don't
+│  ║     trust the redirect alone (race condition)
+│  ║
+│  ║  3. ⚠ Webhook signature verification skipped for v1
+│  ║     (critical risk accepted)
+│  ║
+│  ║  4. Cancel + failure redirect URLs to be added
+│  ║
+│  ╚════════════════════════════════════════════════════════════════════
+│
 ```
 
 #### Rules for the Living Markup
