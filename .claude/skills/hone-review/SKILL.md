@@ -38,31 +38,39 @@ Parse these from the args if present:
 
 Execute the full Hone pipeline as described in the `hone` skill:
 
-1. **Phase 0**: Classify size (or use override) — display Classification Announcement box
-2. **Phase 1**: Question-driven review — ask questions using `AskUserQuestion` tool
-3. **Phase 2**: Dimension review — show Dimension Scorecard after each dimension
-4. **Phase 3**: Unknown unknowns (if L/XL and not skipped)
-5. **Phase 4**: Verdict — display the full Verdict Block
-6. **Phase 5**: Offer sharpen or replan based on verdict
+1. **Phase 0**: Classify size — display Classification Announcement box
+2. **Phase 1**: Recommend dimensions — user picks which to run via `AskUserQuestion`
+3. **Phase 2**: Run dimensions sequentially — questions via `AskUserQuestion`, Living Spec Markup after each
+4. **Phase 3**: Verdict — display the full Verdict Block with final Living Spec Markup
+5. **Phase 4**: Sharpen — offer bulk repair of all findings
 
-Read ALL reference files applicable to the classified size before starting.
+Read ALL reference files applicable to the selected dimensions before starting.
 
 ## Interaction Model
 
-**CRITICAL**: Use the `AskUserQuestion` tool for ALL review questions. This renders native interactive UI instead of ASCII text boxes. Follow the Question Formatting section in the `hone` skill for how to map Hone questions to `AskUserQuestion` parameters.
+**CRITICAL**: Use the `AskUserQuestion` tool for ALL review questions. Follow the Question Formatting section in the `hone` skill.
 
 - Use the `header` field for tier badge + counter: `"T2 Gap [3/18]"`
 - Provide 2-4 actionable options with descriptions
-- Output styled text (progress bars, scorecards, findings) as regular markdown between questions
+- Output styled text (progress, scorecards, Living Spec Markup) between questions
+
+## The Living Spec Markup
+
+This is the reward mechanism. After each dimension completes:
+1. Show the Review Progress dashboard (which dimensions done/running/pending)
+2. Show the Living Spec Markup — the spec's task list with accumulated 🪙 annotations
+3. Show the Learnings section — numbered key takeaways so far
+
+The markup accumulates. Each dimension adds its findings. Developer decisions are shown inline. The spec isn't rewritten until `/hone-sharpen` — but the developer sees the impact building in real-time.
 
 ## Visual Identity
 
-Follow the Visual Identity section in the `hone` skill exactly. Key rules:
-- Use box-drawing characters for scorecards, verdicts, anti-pattern callouts
-- Show progress bars between questions
-- Each finding gets its own 🪙 seam block
-- Never output a wall of text — restructure with boxes, tables, dividers
-- Anti-pattern detections get the named callout box
+Follow the Visual Identity section in the `hone` skill exactly:
+- Box-drawing characters for all containers
+- Progress bars between questions
+- Living Spec Markup with tree-style annotations after each dimension
+- Anti-pattern callout boxes when detected
+- Wide (~72 char) boxes with aligned right edges
 
 ## Key Rules
 
@@ -71,4 +79,6 @@ Follow the Visual Identity section in the `hone` skill exactly. Key rules:
 - Track every question with its tier
 - Be specific — reference exact sections of the spec
 - Use the voice defined in the hone skill: direct, specific, no filler
-- Show Review Progress bar as text between questions
+- Show Review Progress bar between questions
+- Show Living Spec Markup after each dimension completes
+- Sharpen in bulk at the end, never mid-review

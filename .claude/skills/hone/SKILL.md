@@ -323,49 +323,20 @@ The user can override: "treat this as XL" or "just do a quick scan."
 | L    | 15-25     | Gap + Assumptions | 2-4 based on signals | Optional |
 | XL   | 25+       | Gap + Assumptions | All applicable + unknowns | Yes |
 
-### Phase 1: Question-Driven Review
+### Phase 1: Recommend Dimensions
 
-Read `reference/question-engine.md`. This is the core of Hone.
-
-DO NOT dump all findings as a report. Instead, ask questions ONE AT A TIME using the `AskUserQuestion` tool as described in the Question Formatting section above. Wait for the answer. Fold the answer into your understanding. Let the answer inform the next question.
-
-Track every question:
-- Question text
-- Question tier (T1-T5: Clarification, Gap, Challenge, Unknown Unknown, Tradeoff)
-- Developer response (or "deferred")
-- Impact on spec (what changed because of this Q&A)
-
-Question asking is INTERACTIVE. For small tasks, this is 2-3 quick questions inline. For XL tasks, this is a structured conversation that may span multiple messages.
-
-When the developer answers a question, three things can happen:
-1. The answer resolves the concern → Mark as addressed, move on
-2. The answer reveals a new concern → Queue a follow-up question
-3. The developer can't answer → Flag as unresolved, assess risk
-
-Show the Review Progress bar between questions so the developer always knows where they are.
-
-### Phase 2: Core Dimension Review
-
-Always run these two core dimensions:
-
-a. **Gap Analysis** (`reference/gap-analysis.md`) — what's missing
-b. **Assumption Surfacing** (`reference/assumption-surfacing.md`) — what's assumed
-
-Each dimension generates questions via `AskUserQuestion` before generating findings. After completing each dimension, show the Dimension Scorecard.
-
-### Phase 2.5: Recommend Optional Dimensions
-
-After the core dimensions, recommend additional dimensions based on signals detected during the review. Use `AskUserQuestion` to let the user choose:
+After sizing, do a quick scan of the spec to detect signals, then recommend a review plan. Use `AskUserQuestion` with `multiSelect: true` to let the user edit the plan:
 
 ```
 AskUserQuestion({
   questions: [{
-    header: "🪙 Dimensions",
-    question: "Based on the review so far, I recommend these additional checks. Which would you like to run?",
+    header: "🪙 Review Plan",
+    question: "Based on the spec size (L) and content, I recommend this deep review. Select the dimensions you want to run (core dimensions always run):",
     options: [
-      { label: "Testability", description: "Several tasks have vague success criteria — 'it works', 'looks good'" },
-      { label: "Complexity", description: "Task 5 looks like a God Task — webhook handling covers 3+ concerns" },
-      { label: "Skip all", description: "Proceed to verdict with just the core review" }
+      { label: "Testability", description: "Several tasks have vague success criteria" },
+      { label: "Complexity", description: "Task 5 looks like a God Task" },
+      { label: "Unknown Unknowns", description: "Payments domain — common gotchas to surface" },
+      { label: "Skip optional", description: "Run only core dimensions (Gap + Assumptions)" }
     ],
     multiSelect: true
   }]
@@ -385,36 +356,150 @@ AskUserQuestion({
 | Code simplicity | Code-heavy specs, refactoring tasks |
 | Data quality | Data model changes, ERD/schema specs, migrations |
 
-For Size S: skip recommendations entirely.
-For Size M: recommend at most 1.
-For Size L: recommend 2-4.
+For Size S: skip recommendations, run quick scan only.
+For Size M: recommend at most 1 optional dimension.
+For Size L: recommend 2-4 based on signals.
 For Size XL: recommend all applicable, use subagents to run in parallel.
 
-Run each selected dimension by reading its reference file and following the same question-driven review pattern as the core dimensions.
+After the user confirms the plan, show the Review Dashboard:
 
-### Phase 3: Unknown Unknowns (L/XL only)
+```
+╭───────────────────────────────────────────────────────────────────────╮
+│  🪙 REVIEW PLAN                                                      │
+│                                                                       │
+│  ○  Gap Analysis          (core)                                      │
+│  ○  Assumptions           (core)                                      │
+│  ○  Testability           (selected)                                  │
+│  ○  Complexity            (selected)                                  │
+│  ○  Unknown Unknowns      (selected)                                  │
+│                                                                       │
+│  Estimated questions: 15-20                                           │
+╰───────────────────────────────────────────────────────────────────────╯
+```
 
-Read `reference/unknown-unknowns.md`. This is the knowledge expansion phase.
+### Phase 2: Run Dimensions
 
-Identify the domain(s) the spec operates in. Then surface things the developer likely doesn't know about — failure modes, security concerns, scalability traps, regulatory requirements, known gotchas.
+Read `reference/question-engine.md`. This is the core of Hone.
 
-Present each as a T4 question using the Question Formatting template.
+Run each dimension in sequence. For each dimension:
 
-Developer response options:
-- "Add it to the spec" → Add as a task or constraint
-- "Out of scope for v1" → Add as documented non-goal with risk note
-- "I need to research this" → Add as spike/research task
-- "Tell me more" → Explain in detail, then re-ask
+1. Read the corresponding reference file
+2. Ask questions ONE AT A TIME using `AskUserQuestion`
+3. Track every question (text, tier, response, impact)
+4. After completing the dimension, show the Dimension Scorecard
+5. **Show the Living Spec Markup** (see below)
 
-### Phase 4: Verdict
+Questions are INTERACTIVE. Wait for answers. Fold answers into understanding. Let answers inform next questions.
 
-After all questions are asked and dimensions reviewed, produce the Verdict Block using the exact visual format defined above.
+When the developer answers a question, three things can happen:
+1. The answer resolves the concern → Mark as addressed, move on
+2. The answer reveals a new concern → Queue a follow-up question
+3. The developer can't answer → Flag as unresolved, assess risk
 
-### Phase 5: Sharpen or Replan
+The developer can skip any dimension. Apply skip protection (see above).
+The developer can skip individual questions. Apply skip protection (see above).
+
+Show the Review Progress bar between questions:
+
+```
+  Review ████████░░░░░░░░░░░░  42%
+  Dimension: Gap Analysis (1/5) · Q 4/~8
+```
+
+Update the Review Dashboard as dimensions complete:
+
+```
+╭───────────────────────────────────────────────────────────────────────╮
+│  🪙 REVIEW PROGRESS                                                  │
+│                                                                       │
+│  ✅  Gap Analysis          3 seams   ██ high  █ med     5 questions   │
+│  ✅  Assumptions           2 seams   █ high   █ low     4 questions   │
+│  ●   Testability           ...running                                 │
+│  ○  Complexity             pending                                    │
+│  ○  Unknown Unknowns       pending                                    │
+│                                                                       │
+│  Total seams so far: 5  ·  Questions: 9 asked, 8 answered            │
+╰───────────────────────────────────────────────────────────────────────╯
+```
+
+### Living Spec Markup
+
+**This is the reward mechanism.** After each dimension completes, show the spec with accumulated annotations. The developer sees their spec getting marked up in real-time — findings accumulate visually, showing the review's impact before any rewriting happens.
+
+Display the spec's task list with inline annotations:
+
+```
+╭───────────────────────────────────────────────────────────────────────╮
+│  🪙 SPEC MARKUP — Stripe Payment Integration                        │
+│  5 seams found · 2 dimensions complete                                │
+│                                                                       │
+│  Task 1: Add Stripe SDK                                               │
+│  └─ ✓ clean                                                          │
+│                                                                       │
+│  Task 2: Create checkout session endpoint                             │
+│  ├─ 🪙 Missing error handling for 402/429/500  [GAP · HIGH]          │
+│  │  → Developer chose: needs research                                 │
+│  └─ 🪙 Assumes price IDs exist in Stripe  [ASSUMPTION · MED]        │
+│     → Developer confirmed: yes, pre-configured                        │
+│                                                                       │
+│  Task 3: Redirect to Stripe Checkout                                  │
+│  └─ 🪙 No cancel/failure redirect URLs  [GAP · HIGH]                │
+│     → Developer chose: add both cancel + failure                      │
+│                                                                       │
+│  Task 4: Handle success redirect                                      │
+│  └─ 🪙 Race condition: redirect before webhook  [GAP · HIGH]        │
+│     → Developer chose: verify session server-side                     │
+│                                                                       │
+│  Task 5: Handle webhook                                               │
+│  ├─ 🪙 No signature verification  [GAP · CRITICAL · ⚠ RISK ACCEPTED]│
+│  └─ 🪙 Only handles completed event  [GAP · MED]                    │
+│     → Developer chose: needs research                                 │
+│                                                                       │
+│  Task 6: Update UI                                                    │
+│  └─ ✓ clean                                                          │
+│                                                                       │
+│  ─── LEARNINGS SO FAR ─────────────────────────────────────────────── │
+│                                                                       │
+│  1. Stripe error catalog needs research before implementation         │
+│  2. Success page must verify session via Stripe API, not trust        │
+│     the redirect alone                                                │
+│  3. Webhook needs signature verification (risk accepted for v1)       │
+│  4. Cancel + failure redirect URLs to be added                        │
+│                                                                       │
+╰───────────────────────────────────────────────────────────────────────╯
+```
+
+#### Rules for the Living Markup
+
+1. **Show it after every dimension completes** — not after every question (too noisy)
+2. **Annotations accumulate** — each dimension adds its findings to the markup
+3. **Include developer decisions** — "chose: needs research", "confirmed: yes"
+4. **Mark accepted risks prominently** — `⚠ RISK ACCEPTED` for critical/high dismissals
+5. **Learnings section updates** — short numbered list of key takeaways so far
+6. **Clean tasks are marked** — `✓ clean` so the developer sees what's fine too
+7. **Annotations can evolve** — if a later dimension contradicts or extends an earlier finding, update the annotation
+
+The learnings section is the "mini draft" — a running summary of what's been discovered. It's not a rewrite yet, just highlights. It can change as new dimensions add context.
+
+### Phase 3: Verdict
+
+After all dimensions are complete, produce the final Verdict Block using the exact visual format defined above. The verdict reflects ALL dimensions run, all questions asked, and all findings accumulated.
+
+### Phase 4: Sharpen
 
 Based on verdict:
 
-**SHARP / NEEDS HONING**: Offer to sharpen. If yes, apply repairs and re-review. Mark all repairs with `<!-- 🪙 HONED: [description] -->`.
+**SHARP**: Congratulate. The spec survived the review. Show the final Living Spec Markup with all `✓ clean` marks.
+
+**NEEDS HONING**: Show the final Living Spec Markup with all annotations. Then offer to sharpen:
+
+"The review found [N] seams across [M] dimensions. Run `/hone-sharpen` to apply all repairs to the spec?"
+
+If yes, apply ALL repairs in bulk:
+- Use the accumulated findings and developer decisions to rewrite the spec
+- Mark every change with `<!-- 🪙 HONED: [description] -->`
+- Add the review header: `<!-- Hone Review: [N] questions asked, [M] answered, [K] seams found -->`
+- Show the kintsugi diff (before/after)
 
 **ROUGH EDGE**: Generate a Replan Brief (`reference/replan-protocol.md`). The brief tells the planning agent exactly what to preserve, what to rethink, and why.
 
