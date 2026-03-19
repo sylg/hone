@@ -6,6 +6,35 @@ This dimension reviews the spec's implied code architecture — not the code its
 
 ## What to Look For
 
+### Clarity Over Brevity
+
+Specs that push toward compact, clever implementations over readable ones:
+
+#### P0 — Always check
+- Does the spec describe logic that would naturally lead to deeply nested conditionals? (If so, recommend flat structures — early returns, guard clauses, switch statements)
+- Does the spec describe data transformations that would require chaining 5+ operations? (If so, recommend breaking into named intermediate steps)
+- Does the spec collapse multiple distinct behaviors into a single "smart" component or function? (If so, recommend separate, explicit implementations)
+
+#### P1 — Check for M+
+- Does the spec describe a "unified handler" for cases that are actually different? (e.g., one endpoint that handles create, update, and delete based on a mode parameter)
+- Does the spec optimize for fewer files/functions at the cost of readability? (e.g., one 300-line component instead of three 100-line components)
+
+**Question pattern**: "Task [N] combines [X distinct behaviors] into one [function/component/endpoint]. Would separate, explicit implementations be clearer? Explicit code is easier to debug, test, and extend."
+
+### Over-Simplification Guard
+
+Simplification can go too far. Check that the spec isn't:
+
+#### P1 — Check for M+
+- Removing helpful abstractions that genuinely improve organization (e.g., collapsing a well-structured service layer into inline code)
+- Combining unrelated concerns into a single function for "fewer files"
+- Skipping error handling or validation in the name of simplicity
+- Designing something so minimal that it can't be extended without a rewrite
+
+**Question pattern**: "The spec keeps [X] deliberately simple, but [likely future requirement] would require rewriting it. Is a small amount of upfront structure worth it here?"
+
+**Key principle**: Simplify the design, not the requirements. Every simplification should make the code easier to understand AND maintain. If it's easier to write but harder to debug, it's not simpler.
+
 ### Premature Abstraction
 
 Specs that design abstractions before they're needed:
