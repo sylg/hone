@@ -1,6 +1,9 @@
 # Hone review state (local by default — remove this line to commit reports)
 .hone/
 
+# Dev notes (local)
+CLAUDE.md
+
 # Test sandbox (real specs, not committed)
 tests/sandbox/*
 !tests/sandbox/.gitkeep
