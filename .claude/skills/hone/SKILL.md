@@ -324,9 +324,20 @@ Between questions, show a single compact progress line:
 
 When invoked with a spec/plan:
 
-### Phase 0: Prior Reviews + Classify Size
+### Phase 0: Load Config + Prior Reviews + Classify Size
 
-**Before classifying**, check if `.hone/reports/` exists and contains any previous review reports. If it does, scan the filenames and read any that seem related to the current spec. Use past reviews to:
+**First**, read `.hone/config.json` if it exists. Apply settings:
+- `model.review` → use this model for the review (null = inherit from session)
+- `model.subagents` → use this model when dispatching subagents (null = inherit)
+- `dimensions.always_run` → add these to core dimensions
+- `dimensions.never_run` → exclude these from recommendations
+- `dimensions.auto_recommend` → if false, skip the recommendation step
+- `reports.auto_save` → if true, auto-generate report after verdict
+- `reports.directory` → where to save reports
+
+If no config exists, use defaults (inherit session model, auto-recommend, save reports to `.hone/reports/`).
+
+**Then**, check if the reports directory exists and contains any previous review reports. If it does, scan the filenames and read any that seem related to the current spec. Use past reviews to:
 - Avoid re-asking questions that were already answered (state the known answer instead)
 - Reference past decisions ("In the March review, you accepted the webhook signature risk — is that still the case?")
 - Note if a past finding was supposed to be addressed ("The last review flagged missing error handling — has that been added?")
