@@ -10,8 +10,11 @@ This dimension reviews the spec's implied code architecture — not the code its
 
 Specs that design abstractions before they're needed:
 
+#### P0 — Always check
 - "Create a plugin system for..." when only one plugin exists
 - "Build an extensible framework for..." when only one use case is specified
+
+#### P1 — Check for M+
 - "Design a generic handler that..." when one specific handler would do
 - "Create a factory/strategy/adapter pattern for..." when a simple function suffices
 - "Support configurable X" when only one configuration is needed
@@ -22,8 +25,11 @@ Specs that design abstractions before they're needed:
 
 Layers that don't add value:
 
+#### P1 — Check for M+
 - Service layer that just passes through to the repository
 - API gateway that just proxies to one service
+
+#### P2 — Check for L+
 - Event bus for communication between two components in the same process
 - Message queue for a synchronous operation
 - Microservice for something that could be a function
@@ -34,8 +40,11 @@ Layers that don't add value:
 
 Making things configurable that don't need to be:
 
+#### P1 — Check for M+
 - Admin UI for settings that change once per year
 - Config files for values that are constants
+
+#### P2 — Check for L+
 - Feature flags for features that will always be on
 - Environment-specific behavior that's identical across environments
 
@@ -45,9 +54,12 @@ Making things configurable that don't need to be:
 
 Specs that describe the same thing in multiple places or create parallel systems:
 
+#### P1 — Check for M+
 - Two different validation approaches for the same data
-- Multiple ways to do the same thing (REST + GraphQL for the same resource)
 - Duplicate state (same data in database, cache, and frontend store without sync strategy)
+
+#### P2 — Check for L+
+- Multiple ways to do the same thing (REST + GraphQL for the same resource)
 - Multiple notification channels without a unified system
 
 **Question pattern**: "The spec describes [X] in Task [N] and [similar X] in Task [M]. Are these the same concept? Can they be unified?"
@@ -56,8 +68,11 @@ Specs that describe the same thing in multiple places or create parallel systems
 
 Opportunities to reuse existing code or patterns:
 
+#### P1 — Check for M+
 - Building a custom solution when a well-maintained library exists
 - Reimplementing a pattern that exists elsewhere in the codebase
+
+#### P2 — Check for L+
 - Creating a new utility when an existing one covers the use case
 - Writing custom middleware when the framework provides built-in solutions
 
@@ -67,6 +82,7 @@ Opportunities to reuse existing code or patterns:
 
 Every feature has a complexity budget. Check if the spec is spending it wisely:
 
+#### P2 — Check for L+
 - Are the complex parts of the spec where the actual business complexity lives?
 - Or is complexity being spent on infrastructure, abstractions, and "good engineering" rather than user-facing value?
 - Is there a simpler way to achieve 90% of the value with 10% of the complexity?
@@ -74,6 +90,8 @@ Every feature has a complexity budget. Check if the spec is spending it wisely:
 **Question pattern**: "This spec has [N] tasks. [M] of them are infrastructure/tooling. Is that the right ratio for delivering user value?"
 
 ## The YAGNI Check
+
+#### P0 — Always check
 
 For each architectural decision in the spec, ask: "Do we need this now?"
 

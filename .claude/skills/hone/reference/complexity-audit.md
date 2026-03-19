@@ -8,10 +8,15 @@ Find hidden complexity. Tasks that are actually multiple tasks. Integration poin
 
 A single task that contains multiple distinct pieces of work. Signs:
 
+#### P0 — Always check
 - Task description is longer than 3 sentences
 - Task contains sub-bullets that are themselves non-trivial
+
+#### P1 — Check for M+
 - Task mentions multiple systems, services, or components
 - Task uses "and" to connect unrelated work ("Set up the database and implement the auth middleware and write tests")
+
+#### P2 — Check for L+
 - Estimation uncertainty is huge ("could take 2 hours or 2 weeks")
 
 **Question pattern**: "Task [N] contains at least [X] distinct pieces of work: [list them]. Should these be separate tasks with their own success criteria?"
@@ -20,8 +25,13 @@ A single task that contains multiple distinct pieces of work. Signs:
 
 Places where the spec hand-waves a complex integration with a single sentence:
 
+#### P0 — Always check
 - "Connect to [external service]" — what about auth, rate limits, error handling, retries?
+
+#### P1 — Check for M+
 - "Sync data between [A] and [B]" — real-time? batch? conflict resolution? consistency model?
+
+#### P2 — Check for L+
 - "Send notifications" — email? push? in-app? all three? what triggers them? templates?
 - "Update the database" — schema change? migration? backwards compatibility? downtime?
 
@@ -31,9 +41,12 @@ Places where the spec hand-waves a complex integration with a single sentence:
 
 Decisions that look like implementation details but are actually architectural choices:
 
+#### P1 — Check for M+
 - Choice of database (SQL vs NoSQL) buried in a task description
 - Sync vs async processing mentioned casually
 - Caching strategy implied but not specified
+
+#### P2 — Check for L+
 - State management approach assumed
 - API design decisions (REST vs GraphQL, pagination strategy) not called out
 
@@ -43,8 +56,11 @@ Decisions that look like implementation details but are actually architectural c
 
 Work that depends on things not mentioned in the spec:
 
+#### P1 — Check for M+
 - Infrastructure that needs to exist (queue, cache, CDN)
 - Services that need to be running (search index, email service)
+
+#### P2 — Check for L+
 - Config/secrets that need to be provisioned
 - Permissions/access that need to be granted
 - Data that needs to exist (seed data, test accounts)
@@ -55,8 +71,11 @@ Work that depends on things not mentioned in the spec:
 
 Patterns that suggest the spec underestimates effort:
 
+#### P1 — Check for M+
 - "Simple" or "just" preceding a non-trivial task ("just add validation")
 - First-time integrations described as if they're routine
+
+#### P2 — Check for L+
 - No mention of testing effort for complex features
 - No mention of documentation or migration guides
 - Assuming third-party services work exactly as documented

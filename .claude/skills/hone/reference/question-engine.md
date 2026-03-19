@@ -71,6 +71,8 @@ The developer can defer any question: "I'll figure this out later." Deferred que
 
 ## Confidence Calculation
 
+**IMPORTANT**: Do NOT calculate confidence manually. Use `scripts/confidence.py` by piping a JSON scorecard to it. The script handles all weighting, constraints, and edge cases correctly.
+
 Confidence is based on:
 
 1. **Question coverage**: Did the review cover all applicable dimensions?
@@ -90,6 +92,44 @@ Mapping:
   >= 0.8 → HIGH
   >= 0.5 → MEDIUM
   < 0.5  → LOW
+```
+
+### Constraint 1: Minimum Tier Diversity
+
+Confidence CANNOT be HIGH unless at least one T3+ question was asked and answered. A review that only asks T1/T2 questions caps at 0.79 (MEDIUM) regardless of answer ratio.
+
+### Constraint 2: Minimum Question Count Per Size
+
+Confidence CANNOT be HIGH unless question count meets minimum for the spec size:
+
+| Size | Min for HIGH | Min for MEDIUM |
+|------|-------------|----------------|
+| S    | 2           | 1              |
+| M    | 4           | 2              |
+| L    | 10          | 5              |
+| XL   | 15          | 8              |
+
+### Scorecard JSON Format (for scripts/confidence.py)
+
+Pipe this JSON to `scripts/confidence.py` to get the score:
+
+```json
+{
+  "questions": [
+    {"tier": "T2", "status": "answered"},
+    {"tier": "T3", "status": "answered"},
+    {"tier": "T4", "status": "deferred"},
+    {"tier": "T2", "status": "skipped"}
+  ],
+  "dimensions_run": 3,
+  "dimensions_applicable": 5,
+  "size": "M"
+}
+```
+
+Output:
+```json
+{"score": 0.65, "label": "MEDIUM", "constraints_applied": ["Capped: only 3 answered, need 4 for HIGH at size M"]}
 ```
 
 ## Question Pacing

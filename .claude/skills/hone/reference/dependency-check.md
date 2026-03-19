@@ -7,34 +7,25 @@ Find missing prerequisites, incorrect sequencing, hidden dependencies, and paral
 ### Task-to-Task Dependencies
 
 For each task, ask:
+
+#### P0 — Always check
+- Build a mental dependency graph for all tasks
 - What must be done before this task can start?
 - What does this task produce that other tasks need?
-- Can this task run in parallel with others?
 
-Build a mental dependency graph:
-
-```
-Task 1 (SDK install) ──► Task 2 (checkout endpoint) ──► Task 3 (redirect)
-                                      │
-                                      ├──► Task 4 (success page)
-                                      │
-                                      └──► Task 5 (webhook) ──► Task 6 (UI update)
-```
-
-### Missing Prerequisites
-
-Things that must exist before any task can start but aren't listed:
-
-- **Environment setup**: API keys, secrets, environment variables
-- **Infrastructure**: Databases, queues, caches, CDNs that need provisioning
-- **Accounts/access**: Third-party service accounts, IAM permissions
-- **Data**: Seed data, test fixtures, migration scripts
-- **Configuration**: Config files, feature flags, DNS entries
-- **Dependencies**: Libraries that need installing, services that need deploying
+#### P1 — Check for M+
+- Missing prerequisites: environment setup, API keys, secrets, environment variables
+- Missing prerequisites: infrastructure (databases, queues, caches, CDNs)
+- Missing prerequisites: accounts/access (third-party service accounts, IAM permissions)
+- Missing prerequisites: data (seed data, test fixtures, migration scripts)
+- Missing prerequisites: configuration (config files, feature flags, DNS entries)
+- Missing prerequisites: libraries that need installing, services that need deploying
 
 **Question pattern**: "Task [N] requires [prerequisite] but the spec doesn't include setting it up. Is it already done, or is this missing work?"
 
 ### Ordering Errors
+
+#### P1 — Check for M+
 
 Tasks listed in an order that doesn't match their actual dependencies:
 
@@ -47,6 +38,8 @@ Tasks listed in an order that doesn't match their actual dependencies:
 
 ### Circular Dependencies
 
+#### P2 — Check for L+
+
 Tasks that depend on each other, creating a deadlock:
 
 - "Auth middleware requires user roles" + "User roles require auth middleware to test"
@@ -56,17 +49,20 @@ Tasks that depend on each other, creating a deadlock:
 
 ### External Dependencies
 
-Things outside the team's control that tasks depend on:
-
+#### P1 — Check for M+
 - Third-party API availability and rate limits
-- Review/approval processes (security review, design review)
-- Other team's deliverables
 - Infrastructure provisioning timelines
 - Domain registration, SSL certificates
+
+#### P2 — Check for L+
+- Review/approval processes (security review, design review)
+- Other team's deliverables
 
 **Question pattern**: "Task [N] depends on [external dependency]. What's the timeline for this, and what's the fallback if it's delayed?"
 
 ### Parallelization Opportunities
+
+#### P2 — Check for L+
 
 Tasks that could run in parallel but are listed sequentially:
 
@@ -78,6 +74,8 @@ Tasks that could run in parallel but are listed sequentially:
 **Question pattern**: "Tasks [N] and [M] appear independent. Can they run in parallel to save time?"
 
 ### Deployment Ordering
+
+#### P2 — Check for L+
 
 If the spec involves deployment, check:
 

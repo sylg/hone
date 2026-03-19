@@ -4,6 +4,8 @@ Can every task be verified? Is "done" defined concretely? Could a fresh agent ve
 
 ## The Testability Test
 
+#### P0 — Always check
+
 For each task's success criteria, apply this test:
 
 > If I handed this task to a new developer who has never seen the codebase, could they verify it's done without asking a single question?
@@ -34,17 +36,29 @@ If the answer is no, the success criteria are too vague.
 
 Flag these words in success criteria — they're almost always untestable:
 
+#### P0 — Always check
+
 | Vague Word | What to Ask Instead |
 |-----------|-------------------|
 | "works" | Works how? What's the input, expected output, and error case? |
 | "fast" | How fast? What's the baseline and target in milliseconds? |
 | "good" | Good by what standard? What would bad look like? |
-| "clean" | What specific code quality metrics? Lint rules? Complexity score? |
 | "secure" | Against which threats? What security controls are verified? |
+
+#### P1 — Check for M+
+
+| Vague Word | What to Ask Instead |
+|-----------|-------------------|
+| "clean" | What specific code quality metrics? Lint rules? Complexity score? |
 | "robust" | What failure modes does it handle? What's the recovery behavior? |
 | "scalable" | At what scale? What's the current load and target load? |
 | "improved" | Improved from what baseline? By how much? Measured how? |
 | "better" | Better than what? By what metric? |
+
+#### P2 — Check for L+
+
+| Vague Word | What to Ask Instead |
+|-----------|-------------------|
 | "appropriate" | Appropriate according to whom? What's the rule? |
 | "properly" | What does proper look like? What's improper? |
 | "correctly" | What defines correct? What's an example of incorrect? |
@@ -90,10 +104,15 @@ For each VAGUE or UNTESTABLE task, suggest a concrete verification:
 
 Beyond success criteria, check:
 
+#### P1 — Check for M+
 - **No test strategy mentioned**: How is this feature tested? Unit? Integration? E2E? Manual?
-- **No edge case coverage**: Are boundary conditions tested?
 - **No error case testing**: Are failure modes verified?
+
+#### P2 — Check for L+
+- **No edge case coverage**: Are boundary conditions tested?
 - **No performance criteria**: Are there latency/throughput requirements?
+
+#### P3 — Check for XL only
 - **No regression testing**: How do we know nothing else broke?
 - **No acceptance criteria**: How does the product owner verify this?
 

@@ -18,37 +18,54 @@ What questions would they need to ask? Every question they'd ask represents a co
 
 ### File Paths & Locations
 
+#### P0 — Always check
 - Are file paths specified for files to create or modify?
+
+#### P1 — Check for M+
 - Are directory conventions stated? (`src/api/` vs `api/` vs `server/routes/`)
 - If referencing existing code, are function/class names given?
+
+#### P2 — Check for L+
 - Are test file locations specified?
 
 **Question pattern**: "Task [N] says 'create the endpoint' but doesn't specify which file or directory. Where should this code live?"
 
 ### API Contracts
 
-- Are request schemas defined? (parameters, body, headers)
-- Are response schemas defined? (success and error formats)
+#### P0 — Always check
+- Are request/response schemas defined? (parameters, body, headers)
+
+#### P1 — Check for M+
 - Are HTTP methods specified?
 - Are status codes specified?
 - Are content types specified?
+
+#### P2 — Check for L+
 - Are authentication requirements per-endpoint?
 
 **Question pattern**: "Task [N] says 'create POST /api/checkout' but doesn't define the request body schema. What fields does the client send?"
 
 ### Technology & Stack
 
+#### P0 — Always check
 - Is the tech stack specified? (language, framework, database)
+
+#### P1 — Check for M+
 - Are specific libraries called out? (or left to implementer choice)
 - Are version requirements stated?
+
+#### P2 — Check for L+
 - Are build/deployment tools specified?
 
 **Question pattern**: "The spec doesn't mention which framework is used. Is this Express, Next.js API routes, Fastify, or something else?"
 
 ### The "Why" Behind Decisions
 
+#### P1 — Check for M+
 - Is the motivation for the feature explained?
 - Are tradeoff decisions documented with rationale?
+
+#### P2 — Check for L+
 - Are constraints explained (not just listed)?
 - Would the implementer understand what "good" looks like?
 
@@ -56,8 +73,11 @@ What questions would they need to ask? Every question they'd ask represents a co
 
 ### Constraints & Non-Goals
 
+#### P1 — Check for M+
 - Are constraints explicitly stated? (performance, compatibility, etc.)
 - Are non-goals listed? (what this feature intentionally does NOT do)
+
+#### P2 — Check for L+
 - Are out-of-scope items documented?
 - Are assumptions called out as assumptions?
 
@@ -65,7 +85,10 @@ What questions would they need to ask? Every question they'd ask represents a co
 
 ### Examples & Expected Behavior
 
+#### P1 — Check for M+
 - Are example inputs/outputs provided?
+
+#### P2 — Check for L+
 - Are edge case behaviors specified?
 - Are UI mockups or wireframes referenced?
 - Are database schema changes illustrated?
@@ -74,7 +97,10 @@ What questions would they need to ask? Every question they'd ask represents a co
 
 ### Environment & Configuration
 
+#### P1 — Check for M+
 - Are environment variables listed?
+
+#### P2 — Check for L+
 - Are configuration values specified?
 - Are third-party service credentials documented?
 - Is the development setup described?
@@ -83,7 +109,10 @@ What questions would they need to ask? Every question they'd ask represents a co
 
 ### Integration Context
 
+#### P1 — Check for M+
 - How does this feature connect to existing code?
+
+#### P2 — Check for L+
 - Are there existing patterns to follow?
 - Are there existing utilities/helpers to reuse?
 - Are there style guides or conventions to follow?

@@ -19,29 +19,51 @@ This dimension is relevant when the spec involves:
 ### Schema Design
 
 #### Naming Conventions
+
+##### P0 — Always check
 - Are table/column names consistent? (snake_case vs camelCase)
 - Are naming conventions stated or implied?
+
+##### P1 — Check for M+
 - Are names descriptive? (`status` is ambiguous — status of what?)
 - Are boolean columns named as questions? (`is_active`, `has_paid`)
 
 #### Data Types
-- Are types appropriate? (string for email vs dedicated email type/constraint)
+
+##### P0 — Always check
 - Are numeric types correct? (integer for money is wrong — use decimal/cents)
+
+##### P1 — Check for M+
+- Are types appropriate? (string for email vs dedicated email type/constraint)
 - Are dates stored with timezone? (timestamp vs timestamptz)
 - Are enums used for fixed sets? (status: 'active'|'inactive' vs free-text string)
 - Are UUIDs vs auto-increment IDs chosen deliberately?
 
 #### Constraints
-- Are NOT NULL constraints specified for required fields?
-- Are UNIQUE constraints specified where needed? (email, username, slug)
-- Are CHECK constraints specified for value ranges? (price > 0, rating 1-5)
-- Are DEFAULT values specified where appropriate?
+
+##### P0 — Always check
 - Are foreign key constraints defined?
 
-#### Indexes
+##### P1 — Check for M+
+- Are NOT NULL constraints specified for required fields?
+- Are UNIQUE constraints specified where needed? (email, username, slug)
+
+##### P2 — Check for L+
+- Are CHECK constraints specified for value ranges? (price > 0, rating 1-5)
+- Are DEFAULT values specified where appropriate?
+
+##### P3 — Check for XL only
 - Are indexes specified for frequently queried columns?
 - Are composite indexes in the right column order?
+
+#### Indexes
+
+##### P2 — Check for L+
+- Are indexes specified for frequently queried columns?
 - Are indexes specified for foreign keys? (not auto-created in all databases)
+
+##### P3 — Check for XL only
+- Are composite indexes in the right column order?
 - Is there a unique index for natural keys?
 
 **Question pattern**: "The spec adds a `status` column but doesn't specify the allowed values, default, or index. What are the valid statuses? Should it be an enum?"
@@ -49,29 +71,38 @@ This dimension is relevant when the spec involves:
 ### Relationships & Integrity
 
 #### Referential Integrity
+
+##### P0 — Always check
 - Are foreign key relationships defined?
 - What happens on parent deletion? (CASCADE, SET NULL, RESTRICT)
-- Are orphan records possible?
-- Are circular references handled?
 
-#### Cardinality
+##### P1 — Check for M+
 - Is the relationship cardinality stated? (one-to-one, one-to-many, many-to-many)
 - Are junction/join tables needed for many-to-many?
-- Is the cardinality correct? (a user has one avatar vs many avatars)
 
-#### Soft Delete vs Hard Delete
-- Are records deleted or soft-deleted?
+##### P2 — Check for L+
+- Are orphan records possible?
+- Are circular references handled?
 - If soft-deleted, do queries filter by `deleted_at IS NULL`?
-- Can soft-deleted records be restored?
 - Do unique constraints account for soft-deleted records?
+- Is the cardinality correct? (a user has one avatar vs many avatars)
+- Are records deleted or soft-deleted?
+- Can soft-deleted records be restored?
 
 **Question pattern**: "When a team is deleted (Task [N]), what happens to its members and their data? CASCADE deletes everything, SET NULL orphans the records. Which is intended?"
 
 ### Migration Safety
 
 #### Zero-Downtime Migrations
+
+##### P0 — Always check
 - Can the migration run while the application is serving traffic?
 - Does the migration require a maintenance window?
+
+##### P1 — Check for M+
+- Is existing data transformed correctly?
+- What happens to rows that don't match the new constraints?
+- Is the backfill idempotent? (safe to re-run)
 - Are backwards-incompatible changes split into safe steps?
   - Step 1: Add new column (nullable)
   - Step 2: Backfill data
@@ -79,34 +110,39 @@ This dimension is relevant when the spec involves:
   - Step 4: Make column NOT NULL
   - Step 5: Drop old column
 
-#### Data Backfill
-- Is existing data transformed correctly?
-- What happens to rows that don't match the new constraints?
-- Is the backfill idempotent? (safe to re-run)
-- How long does the backfill take? (minutes vs hours)
-
-#### Rollback
+##### P2 — Check for L+
 - Can the migration be rolled back?
 - Is data loss possible during rollback?
 - Is there a point of no return?
+
+##### P3 — Check for XL only
+- How long does the backfill take? (minutes vs hours)
 
 **Question pattern**: "Task [N] adds a NOT NULL column. What value do existing rows get? Is there a backfill step, and what happens to rows where the value is unknown?"
 
 ### Data Consistency
 
 #### Race Conditions
+
+##### P0 — Always check
 - Can concurrent requests create inconsistent data? (double booking, double spend)
+
+##### P1 — Check for M+
 - Are database transactions used for multi-step operations?
 - Is optimistic or pessimistic locking needed?
 - Are uniqueness checks atomic? (check-then-insert has a race window)
 
 #### Eventual Consistency
+
+##### P2 — Check for L+
 - If using caching, how stale can data be?
 - If using read replicas, is replication lag acceptable?
 - If using event-driven updates, what happens during the inconsistency window?
 - Are there user-facing consequences of stale data?
 
 #### Data Validation
+
+##### P3 — Check for XL only
 - Is validation in the application, database, or both?
 - Can the database contain data that the application considers invalid?
 - Are validation rules the same in all write paths? (API, admin panel, migration, seed)
@@ -116,21 +152,23 @@ This dimension is relevant when the spec involves:
 ### Data Lifecycle
 
 #### Retention
+
+##### P1 — Check for M+
 - How long is data kept? (forever? 90 days? until account deletion?)
 - Is there a data retention policy required by regulation? (GDPR, CCPA)
-- Are audit logs retained separately from operational data?
 
-#### Archival
+##### P2 — Check for L+
+- Is PII identified and labeled?
+- Are there fields that need encryption at rest?
+
+##### P3 — Check for XL only
+- Is there an audit trail for sensitive data access?
+- Can user data be exported? (GDPR right of access)
+- Can user data be deleted? (GDPR right to erasure)
+- Are audit logs retained separately from operational data?
 - Is old data archived or deleted?
 - Can archived data be restored?
 - Does archival affect query performance?
-
-#### Privacy & Compliance
-- Is PII identified and labeled?
-- Can user data be exported? (GDPR right of access)
-- Can user data be deleted? (GDPR right to erasure)
-- Are there fields that need encryption at rest?
-- Is there an audit trail for sensitive data access?
 
 **Question pattern**: "The spec stores user payment information. Is this PII? Does it need encryption at rest? What happens when a user requests data deletion?"
 

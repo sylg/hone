@@ -26,7 +26,9 @@ For each task in the spec, classify it:
 
 ### Step 3: Detect Creep Patterns
 
-#### The "While We're At It" Pattern
+#### P0 — Always check
+
+##### The "While We're At It" Pattern
 
 Tasks that piggyback on the original work:
 - "While we're touching the auth system, let's also refactor the middleware"
@@ -35,7 +37,9 @@ Tasks that piggyback on the original work:
 
 **Tell**: Tasks that start with "also", "while we're at it", "might as well", "since we're already".
 
-#### The Gold-Plating Pattern
+#### P1 — Check for M+
+
+##### The Gold-Plating Pattern
 
 Features that go beyond minimum viable:
 - Adding a settings page when a config file would suffice
@@ -45,7 +49,7 @@ Features that go beyond minimum viable:
 
 **Tell**: Tasks that make the feature more polished but aren't required for it to work.
 
-#### The v2 Disguised as v1 Pattern
+##### The v2 Disguised as v1 Pattern
 
 Future requirements pulled into the current scope:
 - "Support for multiple languages" when the feature is only needed in English
@@ -54,7 +58,9 @@ Future requirements pulled into the current scope:
 
 **Tell**: Requirements that address scale, flexibility, or features that aren't needed yet.
 
-#### The Tangential System Pattern
+#### P2 — Check for L+
+
+##### The Tangential System Pattern
 
 Work that's actually a separate project:
 - Building a notification system to support one notification
@@ -78,6 +84,8 @@ Present scope concerns as questions:
 
 ## The MVP Test
 
+#### P0 — Always apply for specs with 6+ tasks
+
 For any spec with 6+ tasks, apply the MVP test:
 
 1. Which tasks are required for the feature to work at all?
@@ -85,6 +93,13 @@ For any spec with 6+ tasks, apply the MVP test:
 3. Which tasks make it work perfectly?
 
 Group 1 is your v1. Group 2 is your fast-follow. Group 3 is your backlog.
+
+#### P1 — Apply for specs with 4-5 tasks
+
+For specs with 4-5 tasks, apply a lighter version of the MVP test:
+
+1. Which tasks are required for the feature to work at all?
+2. Which tasks could be deferred to a follow-up?
 
 ## Output Format
 
