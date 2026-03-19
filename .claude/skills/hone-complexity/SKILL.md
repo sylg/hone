@@ -48,7 +48,7 @@ If The God Task anti-pattern is detected, show the anti-pattern callout box.
 
 ## Output
 
-After the interactive Q&A, produce findings using the Kintsugi seam format from the reference file. End with a dimension scorecard:
+After the interactive Q&A, produce findings using the standard findings format from the reference file. End with a dimension scorecard:
 
 ```
 ┌─ COMPLEXITY AUDIT COMPLETE ───────────────────────────────────────────┐

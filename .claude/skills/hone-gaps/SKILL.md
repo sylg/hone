@@ -50,7 +50,7 @@ If The Happy Path Only anti-pattern is detected, show the anti-pattern callout b
 
 ## Output
 
-After the interactive Q&A, produce findings using the Kintsugi seam format:
+After the interactive Q&A, produce findings using the standard findings format:
 
 ```
 🪙 ── Gap: [Short title] ────────────────────────

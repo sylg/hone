@@ -44,7 +44,7 @@ Apply the risky answer pushback from the `hone` skill when critical risks are di
 
 ## Output
 
-After the interactive Q&A, produce findings using the Kintsugi seam format:
+After the interactive Q&A, produce findings using the standard findings format:
 
 ```
 🪙 ── Unknown: [Short title] ───────────────────────────────────────────

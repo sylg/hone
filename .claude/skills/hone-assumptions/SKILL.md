@@ -49,7 +49,7 @@ If The Assumption Iceberg anti-pattern is detected, show the anti-pattern callou
 
 ## Output
 
-After the interactive Q&A, produce findings using the Kintsugi seam format:
+After the interactive Q&A, produce findings using the standard findings format:
 
 ```
 🪙 ── Assumption: [Short title] ─────────────────

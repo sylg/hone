@@ -46,7 +46,7 @@ Ask questions using `AskUserQuestion`. Use the `header` field: `"T3 Simplicity [
 
 ## Output
 
-After the interactive Q&A, produce findings using the Kintsugi seam format from the reference file. End with a dimension scorecard:
+After the interactive Q&A, produce findings using the standard findings format from the reference file. End with a dimension scorecard:
 
 ```
 ┌─ CODE SIMPLICITY COMPLETE ────────────────────────────────────────────┐

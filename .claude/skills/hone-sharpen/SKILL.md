@@ -3,7 +3,7 @@ name: hone-sharpen
 description: >
   Apply repairs to a spec based on review findings. Takes all accumulated
   findings from a Hone review and rewrites the spec with fixes applied.
-  Marks every change with Kintsugi markers. Shows a before/after diff.
+  Marks every change with HONED markers. Shows a before/after diff.
 user-invokable: true
 args:
   - name: target

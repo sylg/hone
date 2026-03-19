@@ -128,7 +128,7 @@ Present a scope map:
 ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
-Individual findings in Kintsugi format:
+Individual findings format:
 
 ```
 🪙 ── Scope: [Short title] ─────────────────────────────────────────────

@@ -2,7 +2,7 @@
 name: hone-sharpener
 description: >
   Hone repair subagent. Applies fixes to a spec based on review findings.
-  Marks all repairs with Kintsugi markers and produces a changelog.
+  Marks all repairs with HONED markers and produces a changelog.
 ---
 
 # Hone Sharpener Subagent
