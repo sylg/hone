@@ -40,31 +40,34 @@ COUNTER=$(echo "$HEADER" | grep -oE '\[[0-9]+/~?[0-9]+\]' | head -1)
 # Extract question text
 QUESTION=$(echo "$INPUT" | grep -oE '"question"\s*:\s*"[^"]*"' | head -1 | sed 's/"question"\s*:\s*"//' | sed 's/"$//' | head -c 500)
 
-# Build the question entry
-ENTRY=$(cat <<EOF
-{
-  "timestamp": "$TIMESTAMP",
-  "tier": "$TIER",
-  "dimension": "$DIMENSION",
-  "header": "$HEADER",
-  "question": "$QUESTION",
-  "counter": "$COUNTER"
-}
-EOF
-)
-
-# Append to questions array in session file
-# Use python if available for reliable JSON manipulation, otherwise append raw
+# Append to questions array in session file using python3 via stdin (no shell interpolation)
 if command -v python3 &>/dev/null; then
-  python3 -c "
+  python3 << 'PYEOF' "$SESSION_FILE" "$TIMESTAMP" "$TIER" "$DIMENSION" "$HEADER" "$QUESTION" "$COUNTER"
 import json, sys
-entry = json.loads('''$ENTRY''')
-with open('$SESSION_FILE', 'r') as f:
-    session = json.load(f)
+
+session_file = sys.argv[1]
+entry = {
+    "timestamp": sys.argv[2],
+    "tier": sys.argv[3],
+    "dimension": sys.argv[4],
+    "header": sys.argv[5],
+    "question": sys.argv[6],
+    "counter": sys.argv[7]
+}
+
+try:
+    with open(session_file, 'r') as f:
+        session = json.load(f)
+except (json.JSONDecodeError, FileNotFoundError):
+    session = {"questions": []}
+
 session['questions'].append(entry)
-with open('$SESSION_FILE', 'w') as f:
+
+with open(session_file, 'w') as f:
     json.dump(session, f, indent=2)
-" 2>/dev/null || true
+PYEOF
+else
+  echo "Warning: python3 not available, question not logged to session" >&2
 fi
 
 exit 0

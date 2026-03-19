@@ -50,7 +50,7 @@ When entering a new phase, announce it with a styled header:
 
 ```
 ╭───────────────────────────────────────────────────────────────────────╮
-│  🪙 PHASE 0 ─ SIZE CALIBRATION                                      │
+│  PHASE 0 ─ SIZE CALIBRATION                                          │
 ╰───────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -60,7 +60,7 @@ Use a wide format. Right-align the progress bars and scores into a clean table. 
 
 ```
 ╭───────────────────────────────────────────────────────────────────────╮
-│  🪙 SIZE CLASSIFICATION                                              │
+│  SIZE CLASSIFICATION                                                  │
 │                                                                       │
 │  Verdict:   L (Large)                                                 │
 │  Reason:    New feature, 3 integration points, external service       │

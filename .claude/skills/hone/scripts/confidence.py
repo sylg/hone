@@ -43,19 +43,24 @@ def main():
         for q in questions
     )
 
-    dims_run = scorecard.get("dimensions_run", 1)
-    dims_applicable = scorecard.get("dimensions_applicable", 1)
+    dims_run = int(scorecard.get("dimensions_run", 1))
+    dims_applicable = int(scorecard.get("dimensions_applicable", 1))
     dimension_coverage = dims_run / max(dims_applicable, 1)
 
-    raw = (answered_weight / max(total_weight, 1)) * dimension_coverage
+    raw = min((answered_weight / max(total_weight, 1)) * dimension_coverage, 1.0)
 
     reasons = []
 
     # Constraint 1: Tier diversity — confidence cannot be HIGH unless
     # at least one T3+ question was asked and answered
+    def tier_num(q):
+        t = q.get("tier", "T1")
+        if isinstance(t, str) and len(t) >= 2 and t.startswith("T") and t[1].isdigit():
+            return int(t[1])
+        return 1
+
     max_answered_tier = max(
-        (int(q["tier"][1]) for q in questions
-         if q.get("status") == "answered" and q.get("tier", "T1").startswith("T")),
+        (tier_num(q) for q in questions if q.get("status") == "answered"),
         default=0
     )
     if max_answered_tier < 3:

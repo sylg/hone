@@ -12,8 +12,6 @@ if [ ! -f "$SPEC_FILE" ]; then
   exit 1
 fi
 
-CONTENT=$(cat "$SPEC_FILE")
-
 # Count tasks (lines starting with - [ ], numbered items, or ### Task headers)
 TASK_COUNT=$(grep -cE '^\s*(-\s*\[.\]|[0-9]+\.\s|#{1,3}\s*(Task|Step)\s)' "$SPEC_FILE" 2>/dev/null || true)
 TASK_COUNT="${TASK_COUNT:-0}"
@@ -51,41 +49,69 @@ MENTIONS_FILE_HANDLING=$(detect_signal "(upload|download|storage|s3|cdn|file|ima
 ALREADY_HONED=$(grep -q '<!-- 🪙 Hone Review:' "$SPEC_FILE" 2>/dev/null && echo true || echo false)
 
 # Extract task details (title + line number for each task-like line)
-TASKS_JSON=$(grep -nE '^\s*(-\s*\[.\]|[0-9]+\.\s|#{1,3}\s*(Task|Step)\s)' "$SPEC_FILE" 2>/dev/null | head -50 | while IFS=: read -r line_num line_text; do
-  # Clean up the line text for JSON
-  clean_text=$(echo "$line_text" | sed 's/^[[:space:]]*[-*] \[.\] //' | sed 's/^[[:space:]]*[0-9]*\. //' | sed 's/^#* //' | sed 's/"/\\"/g' | head -c 200)
-  echo "{\"line\":$line_num,\"title\":\"$clean_text\"}"
-done | paste -sd',' - 2>/dev/null || echo "")
+TASKS_RAW=$(grep -nE '^\s*(-\s*\[.\]|[0-9]+\.\s|#{1,3}\s*(Task|Step)\s)' "$SPEC_FILE" 2>/dev/null | head -50 || true)
 
-if [ -z "$TASKS_JSON" ]; then
-  TASKS_JSON="[]"
-else
-  TASKS_JSON="[$TASKS_JSON]"
-fi
+# Use python3 for safe JSON output (handles escaping correctly)
+# Pass tasks via stdin, everything else via env vars
+export _HONE_FILE="$SPEC_FILE" _HONE_TASKS="$TASK_COUNT" _HONE_WORDS="$WORD_COUNT" \
+  _HONE_WHY="$HAS_WHY" _HONE_CONSTRAINTS="$HAS_CONSTRAINTS" _HONE_NONGOALS="$HAS_NON_GOALS" \
+  _HONE_SUCCESS="$HAS_SUCCESS" _HONE_HASTASKS="$HAS_TASKS" \
+  _HONE_AUTH="$MENTIONS_AUTH" _HONE_PAY="$MENTIONS_PAYMENTS" _HONE_MIG="$MENTIONS_MIGRATION" \
+  _HONE_API="$MENTIONS_EXTERNAL_API" _HONE_SEC="$MENTIONS_SECURITY" _HONE_DB="$MENTIONS_DATABASE" \
+  _HONE_RT="$MENTIONS_REALTIME" _HONE_FILE="$MENTIONS_FILE_HANDLING" \
+  _HONE_HONED="$ALREADY_HONED"
 
-cat <<EOF
-{
-  "file": "$SPEC_FILE",
-  "task_count": $TASK_COUNT,
-  "word_count": $WORD_COUNT,
-  "tasks": $TASKS_JSON,
-  "sections": {
-    "has_why": $HAS_WHY,
-    "has_constraints": $HAS_CONSTRAINTS,
-    "has_non_goals": $HAS_NON_GOALS,
-    "has_success_criteria": $HAS_SUCCESS,
-    "has_tasks": $HAS_TASKS
-  },
-  "domain_signals": {
-    "auth": $MENTIONS_AUTH,
-    "payments": $MENTIONS_PAYMENTS,
-    "migration": $MENTIONS_MIGRATION,
-    "external_api": $MENTIONS_EXTERNAL_API,
-    "security": $MENTIONS_SECURITY,
-    "database": $MENTIONS_DATABASE,
-    "realtime": $MENTIONS_REALTIME,
-    "file_handling": $MENTIONS_FILE_HANDLING
-  },
-  "already_honed": $ALREADY_HONED
+echo "$TASKS_RAW" | python3 -c '
+import json, sys, os, re
+
+def to_bool(s):
+    return s.strip().lower() == "true"
+
+def env(k):
+    return os.environ.get(k, "")
+
+# Parse task lines from stdin (format: "linenum:text")
+tasks = []
+for line in sys.stdin:
+    line = line.strip()
+    if ":" not in line:
+        continue
+    num, text = line.split(":", 1)
+    text = re.sub(r"^\s*[-*]\s*\[.\]\s*", "", text)
+    text = re.sub(r"^\s*\d+\.\s*", "", text)
+    text = re.sub(r"^#+\s*", "", text)
+    try:
+        tasks.append({"line": int(num.strip()), "title": text.strip()[:200]})
+    except ValueError:
+        continue
+
+tc = env("_HONE_TASKS")
+wc = env("_HONE_WORDS")
+
+result = {
+    "file": env("_HONE_FILE"),
+    "task_count": int(tc) if tc else 0,
+    "word_count": int(wc) if wc else 0,
+    "tasks": tasks,
+    "sections": {
+        "has_why": to_bool(env("_HONE_WHY")),
+        "has_constraints": to_bool(env("_HONE_CONSTRAINTS")),
+        "has_non_goals": to_bool(env("_HONE_NONGOALS")),
+        "has_success_criteria": to_bool(env("_HONE_SUCCESS")),
+        "has_tasks": to_bool(env("_HONE_HASTASKS")),
+    },
+    "domain_signals": {
+        "auth": to_bool(env("_HONE_AUTH")),
+        "payments": to_bool(env("_HONE_PAY")),
+        "migration": to_bool(env("_HONE_MIG")),
+        "external_api": to_bool(env("_HONE_API")),
+        "security": to_bool(env("_HONE_SEC")),
+        "database": to_bool(env("_HONE_DB")),
+        "realtime": to_bool(env("_HONE_RT")),
+        "file_handling": to_bool(env("_HONE_FILE")),
+    },
+    "already_honed": to_bool(env("_HONE_HONED")),
 }
-EOF
+
+print(json.dumps(result, indent=2))
+'

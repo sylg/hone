@@ -1,4 +1,4 @@
-# Hone 磨く
+# Hone
 
 Spec review and refinement plugin for AI coding agents.
 

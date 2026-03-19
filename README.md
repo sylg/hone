@@ -1,27 +1,20 @@
-# Hone 磨く
+# Hone
 
-**Sharpen the spec. Ship with craft.**
+You said "looks good" without checking.
+The agent ran with it.
+Now you're debugging a spec you never reviewed.
 
-Hone is a spec review and refinement tool for AI coding agents. It sits between plan generation and execution — the moment where developers say "looks good" without actually checking.
+Hone sits between plan and execution. It pressure-tests specs through interactive Q&A — surfacing gaps, challenging assumptions, finding what you didn't know to ask. Then it sharpens the spec with tracked repairs.
 
-Hone pressure-tests specs through interactive Q&A, surfaces what's missing, challenges assumptions, and discovers what you didn't know to ask about. Then it sharpens the spec with tracked repairs.
+Your agent writes the spec. Hone sharpens it.
 
-**Hone is not a spec generator.** It's the whetstone — the tool that sharpens specs written by other agents or humans.
+## Philosophy
 
----
-
-## How It Works
-
-```
-Your Spec → Hone Review → Questions → Findings → Sharpen → Ship
-```
-
-1. **Size it** — Hone classifies your spec as S/M/L/XL based on blast radius, reversibility, domain risk, and novelty
-2. **Pick dimensions** — Core checks always run. Hone recommends optional dimensions based on your spec's content. You choose.
-3. **Answer questions** — Hone asks questions one at a time. Your answers shape the review.
-4. **See findings accumulate** — The Living Spec Markup shows your spec getting annotated in real-time
-5. **Get a verdict** — SHARP / NEEDS HONING / ROUGH EDGE / RESHAPE
-6. **Sharpen** — Apply all findings as tracked repairs to your spec
+- **Questions are the product** — A spec that survived 23 questions is categorically different from one that survived 3
+- **Craft over speed** — Slow down at the spec to go faster everywhere else
+- **Repair is refinement** — Gaps found are features, not failures
+- **Right-sized rigor** — A copy fix doesn't need the same depth as a system migration
+- **Composable, not monolithic** — Use one dimension or all ten
 
 ## The Review Flow
 
@@ -61,10 +54,10 @@ Your Spec → Hone Review → Questions → Findings → Sharpen → Ship
 
     ↓
 
-╔═ 🪙 HONE REVIEW COMPLETE ═════════════════════════════
+╔═ HONE REVIEW COMPLETE ══════════════════════════════════
 ║  Verdict: 🟡 NEEDS HONING
 ║  4 findings · 7 questions · Confidence: MEDIUM
-╚════════════════════════════════════════════════════════
+╚═════════════════════════════════════════════════════════
 
     ↓
 
@@ -72,12 +65,63 @@ Your Spec → Hone Review → Questions → Findings → Sharpen → Ship
    /hone-report  → Persistent report saved
 ```
 
+## What a review looks like
+
+Given a spec for adding Stripe checkout to a pricing page:
+
+```
+✦ GAPS
+🟠 High — No error handling for checkout session creation. Task 2 calls
+  Stripe's API but doesn't handle 402 (card declined), 429 (rate limit),
+  or 500 (Stripe outage). Users will see an unhandled exception.
+
+🟠 High — No webhook signature verification. Task 5 accepts POST requests
+  to /api/webhooks/stripe without verifying the Stripe-Signature header.
+  Anyone can forge events and grant themselves a paid plan.
+
+🟡 Medium — No cancel or failure redirect URL. Task 3 redirects to Stripe
+  but doesn't specify where users go if they abandon checkout or payment fails.
+
+✦ ASSUMPTIONS
+🟡 Medium — Spec assumes price IDs already exist in Stripe. No task to
+  create products/prices or document which price IDs map to which plans.
+
+Verdict: 🟡 NEEDS HONING · 4 findings · 8 questions · Confidence: HIGH
+```
+
+## Install
+
+**Works with Claude Code · Cursor · Codex CLI · Gemini CLI · OpenCode**
+
+### Skills.sh
+
+```bash
+npx skills add sylg/hone
+```
+
+### Manual
+
+```bash
+git clone https://github.com/sylg/hone.git .hone-plugin
+cp -r .hone-plugin/.claude .claude
+cp -r .hone-plugin/.claude-plugin .claude-plugin
+```
+
 ## Commands
+
+Start here:
 
 | Command | What it does |
 |---------|-------------|
 | `/hone-review` | Full review pipeline — size, recommend, question, verdict |
+| `/hone-sharpen` | Apply all findings as tracked repairs |
+| `/hone-report` | Generate persistent review report |
 | `/hone-gaps` | Find what's missing — error handling, edge cases, rollback |
+
+All commands:
+
+| Command | What it does |
+|---------|-------------|
 | `/hone-assumptions` | Surface what must be true but isn't stated |
 | `/hone-unknowns` | Domain-specific gotchas you didn't know to ask about |
 | `/hone-complexity` | Find tasks that are actually multiple tasks |
@@ -87,14 +131,12 @@ Your Spec → Hone Review → Questions → Findings → Sharpen → Ship
 | `/hone-context` | Can a fresh dev execute without asking questions? |
 | `/hone-simplicity` | Flag premature abstractions and over-engineering |
 | `/hone-data-quality` | Review schema design, constraints, migration safety |
-| `/hone-sharpen` | Apply all findings as tracked repairs |
 | `/hone-diff` | Show before/after of sharpened spec |
-| `/hone-report` | Generate persistent review report |
 | `/hone-settings` | Configure models, reports, dimensions |
 
 ## 10 Review Dimensions
 
-Hone reviews are composable. Two core dimensions always run. The rest are recommended based on your spec's size and content.
+Two dimensions always run. The rest are recommended per-spec.
 
 **Core (always run):**
 
@@ -116,53 +158,25 @@ Hone reviews are composable. Two core dimensions always run. The rest are recomm
 | **Code Simplicity** | Premature abstraction, YAGNI violations | Refactoring, code-heavy specs |
 | **Data Quality** | Schema, constraints, migration safety | Data model changes |
 
-## Severity Indicators
+## Ratings
 
-Findings use colored squares for severity at a glance:
+**Severities:**
 
-- 🟥 **Critical** — Will cause data loss, security breach, or outage
-- 🟠 **High** — Will cause user-facing errors in production
-- 🟡 **Medium** — Will cause degraded experience or require hotfix
-- 🔵 **Low** — Cosmetic or minor, can address post-launch
+- 🟥 **Critical** — Data loss, security breach, or outage
+- 🟠 **High** — User-facing errors in production
+- 🟡 **Medium** — Degraded experience or hotfix needed
+- 🔵 **Low** — Cosmetic, can address post-launch
 
-## Verdicts
+**Verdicts:**
 
 | Verdict | Meaning |
 |---------|---------|
-| 🟢 **SHARP** | Minor issues only. Safe to execute. |
-| 🟡 **NEEDS HONING** | Gaps found but structure is sound. Run `/hone-sharpen`. |
-| 🟠 **ROUGH EDGE** | Structural issues. Plan needs rethinking. |
-| 🔴 **RESHAPE** | Approach is fundamentally wrong. Back to design. |
+| 🟢 **SHARP** | Safe to execute. |
+| 🟡 **NEEDS HONING** | Gaps found, structure sound. Run `/hone-sharpen`. |
+| 🟠 **ROUGH EDGE** | Structural issues. Needs replanning. |
+| 🔴 **RESHAPE** | Wrong approach. Back to design. |
 
-## Install
-
-### Skills.sh
-
-```bash
-npx skills add sylg/hone
-```
-
-### Manual
-
-Clone the repo into your project:
-
-```bash
-git clone https://github.com/sylg/hone.git .hone-plugin
-cp -r .hone-plugin/.claude .claude
-cp -r .hone-plugin/.claude-plugin .claude-plugin
-```
-
-### Supported Platforms
-
-Hone is designed to work with any AI coding agent that supports skills/commands:
-
-- Claude Code
-- Cursor
-- Codex CLI
-- Gemini CLI
-- OpenCode
-
-## Settings
+## Configuration
 
 Run `/hone-settings` to configure:
 
@@ -172,28 +186,10 @@ Run `/hone-settings` to configure:
 
 Settings stored at `.hone/config.json`.
 
-## Review Memory
+Hone remembers past reviews. It won't re-ask questions you already answered. It'll reference past decisions: "You accepted this risk in March — still the case?"
 
-Hone saves review reports to `.hone/reports/`. Future reviews read past reports to:
-
-- Avoid re-asking questions that were already answered
-- Reference past decisions ("You accepted this risk in March — still the case?")
-- Check if previous findings were addressed
-
-Remove `.hone/` from your `.gitignore` to share review history with your team.
-
-## Philosophy
-
-- **Questions are the product** — A spec that survived 23 questions is categorically different from one that survived 3
-- **Craft over speed** — Slow down at the spec to go faster everywhere else
-- **Repair is refinement** — Gaps found are features, not failures. Gold seams, not red errors.
-- **Right-sized rigor** — A copy fix doesn't need the same depth as a system migration
-- **Composable, not monolithic** — Use one dimension or all ten
+Reports are saved to `.hone/reports/`. Remove `.hone/` from your `.gitignore` to share review history with your team.
 
 ## License
 
 MIT
-
----
-
-*Hone 磨く — Sharpen the spec. Ship with craft.*

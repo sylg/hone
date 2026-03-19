@@ -1,5 +1,5 @@
 #!/bin/bash
-# PreToolUse hook: prevents editing the spec file during review phases (0-2).
+# PreToolUse hook: prevents editing the spec file during review phases (0-3).
 # Only /hone-sharpen (Phase 4) may modify the spec.
 #
 # This script is called by the hook system with tool input on stdin.
