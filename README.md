@@ -93,6 +93,13 @@ Verdict: 🟡 NEEDS HONING · 4 findings · 8 questions · Confidence: HIGH
 
 **Works with Claude Code · Cursor · Codex CLI · Gemini CLI · OpenCode**
 
+### Claude Code (Plugin Marketplace)
+
+```
+/plugin marketplace add sylg/hone
+/plugin install hone@sylg-hone
+```
+
 ### Skills.sh
 
 ```bash

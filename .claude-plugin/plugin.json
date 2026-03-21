@@ -1,11 +1,13 @@
 {
   "name": "hone",
-  "description": "Spec review and refinement for AI coding agents. 1 skill, 12 commands, and 6 agents for pressure-testing plans before execution. Sharpen the spec. Ship with craft.",
-  "version": "0.1.0",
+  "description": "Spec review and refinement plugin. Pressure-tests plans through interactive Q&A — surfaces gaps, challenges assumptions, finds what you didn't know to ask. 10 review dimensions, 15 commands, 6 agents.",
+  "version": "0.2.0",
   "author": {
     "name": "Sylvain Giuliani"
   },
-  "repository": "https://github.com/augmentcode/hone",
+  "repository": "https://github.com/sylg/hone",
+  "homepage": "https://github.com/sylg/hone",
+  "license": "MIT",
   "skills": "./.claude/skills",
   "agents": "./.claude/agents"
 }
