@@ -8,6 +8,5 @@
   "repository": "https://github.com/sylg/hone",
   "homepage": "https://github.com/sylg/hone",
   "license": "MIT",
-  "skills": "./.claude/skills",
-  "agents": "./.claude/agents"
+  "skills": "./.claude/skills"
 }
