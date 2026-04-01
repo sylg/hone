@@ -28,6 +28,7 @@ Find what's missing. Not what's wrong — what's absent.
 #### P1 — Check for M+
 - What happens with boundary values? (0, -1, MAX_INT, empty set)
 - What happens during partial failure? (2 of 5 operations succeed)
+- For write operations: does the spec define a concurrency control strategy? Flag if absent — the three implementable options are optimistic locking (compare-and-swap), idempotency keys (client-generated dedupe token), or explicit last-write-wins. Unspecified means implementers choose arbitrarily.
 
 #### P2 — Check for L+
 - What happens with very large inputs? (10x, 100x expected size)
@@ -104,6 +105,7 @@ Find what's missing. Not what's wrong — what's absent.
 #### P1 — Check for M+
 - What's the data migration strategy?
 - Is backward compatibility addressed? (old clients, old data)
+- For schema changes: is the migration backwards-compatible so old code can run against the new schema during a rolling deploy? Flag if the spec introduces a non-nullable column without a default value, drops a column still referenced by existing code, or renames a column — each of these requires either a multi-step migration sequence or a coordinated hard cutover, and the spec should specify which.
 
 #### P2 — Check for L+
 - What's the data retention policy?
