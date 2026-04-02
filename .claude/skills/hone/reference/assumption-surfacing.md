@@ -24,6 +24,9 @@ For every statement in the spec, ask: "What must be true for this to work?" If t
 
 #### P0 — Always check
 - Data shape, schema version, field presence/absence
+- **Conflict resolution**: when two actors (users, systems, sync directions) modify the same record concurrently, what wins? Is this stated? (Last-write-wins? Server-authoritative? Manual resolution?) Flag if the spec treats writes as non-conflicting without justification.
+- **Idempotency**: can each operation (API call, sync step, webhook handler, migration) be safely retried or re-run without duplicating effects? If the spec doesn't guarantee idempotency for operations that can fail mid-flight, flag it as a reliability gap.
+- **Transaction boundary**: when an operation writes to multiple records, tables, or external services, does the spec state whether all writes must succeed atomically? Flag if partial failure (some writes succeed, some fail) is unaddressed — a silent partial update is often worse than a full rollback.
 
 #### P1 — Check for M+
 - Data volume (current and projected growth)
@@ -52,7 +55,7 @@ For every statement in the spec, ask: "What must be true for this to work?" If t
 ### User Assumptions
 
 #### P0 — Always check
-- Permission level (admin? regular user? anonymous?)
+- **Permission boundary**: when the spec introduces a new endpoint, mutation, UI action, or data-access path, verify it explicitly states which roles/permission levels are allowed. Flag if the spec assumes new operations inherit permissions from adjacent routes or existing features without stating so — access control is not transitive. Ask: "Is there middleware, a gate check, or a policy rule that enforces this, and does the spec name it?"
 
 #### P1 — Check for M+
 - User behavior (follows happy path? tries to break things?)
@@ -69,6 +72,7 @@ For every statement in the spec, ask: "What must be true for this to work?" If t
 
 #### P0 — Always check
 - Implicit sequencing not stated ("obviously X runs before Y")
+- **State transition completeness**: when the spec introduces or modifies a status field or state machine (e.g., sync status, verification steps, booking states, modal/UI modes), verify it enumerates all valid transitions and terminal states, and states what happens on invalid or unexpected transitions. Flag if the spec describes only the happy-path transition without addressing intermediate states, stuck states, or failure states — incomplete state machines are a common source of edge-case bugs.
 
 #### P1 — Check for M+
 - Setup/prerequisite steps assumed to be done
@@ -93,61 +97,11 @@ For every statement in the spec, ask: "What must be true for this to work?" If t
 
 ## How to Surface Assumptions
 
-Read each statement in the spec. For each one, mentally construct the chain of requirements:
+Read each statement in the spec. For each one, mentally construct the chain of requirements by routing to the relevant P0 check:
 
-```
-Spec says: "Query the user's order history"
-
-Hidden assumptions:
-- User is authenticated (how?)
-- User has an order history (what if new user?)
-- Order history is in a queryable format (indexed? which database?)
-- Query will return in reasonable time (how many orders? pagination?)
-- Results fit in memory (max result set size?)
-- User can only see their own orders (authorization checked where?)
-```
-
-### Present Each Assumption
-
-Tag assumptions as [STATED] or [UNSTATED]:
-
-```
-[STATED] Users authenticate via JWT token — spec section 2.1
-[UNSTATED] JWT token is validated on every request, not just at session start
-[UNSTATED] Token refresh happens transparently to the user
-[UNSTATED] Expired tokens return 401, not 403
-```
-
-### Ask, Don't Tell
-
-For each unstated assumption, ask the developer to confirm or deny:
-
-"The spec assumes [X]. Is that correct? If not, what's the actual constraint?"
-
-This gives the developer a chance to:
-1. Confirm it (now it's stated, not assumed)
-2. Deny it (now we've found a real gap)
-3. Say "I don't know" (now we've found an unknown)
-
-## Severity of Assumptions
-
-| Impact if assumption is wrong | Severity |
-|------|----------|
-| Spec still works, minor adjustment needed | Low |
-| Feature works differently than intended | Medium |
-| Feature breaks in production | High |
-| Security vulnerability or data loss | Critical |
-
-## Output Format
-
-```
-### 🪙 Assumption: [Short title]
-
-**Location**: [Which statement in the spec]
-**The assumption**: [What must be true for this to work]
-**Status**: [STATED / UNSTATED]
-**Question**: [T3] [Question to the developer]
-**If wrong**: [What breaks if this assumption is false]
-**Severity**: [Critical/High/Medium/Low]
-**Suggested repair**: [How to make this explicit in the spec]
-```
+- **New endpoint, action, mutation, or data-access path?** → User P0: which roles are authorized, and is the enforcement mechanism (middleware, gate check, policy rule) named?
+- **Status field, state machine, or multi-step flow?** → Ordering P0: are all transitions, failure states, and stuck states enumerated — not just the happy path?
+- **Write, sync, or operation that can be retried or run concurrently?** → Data P0: is conflict resolution stated? is the operation safe to re-run without duplicating effects?
+- **Operation that writes to multiple records, tables, or external services?** → Data P0: is atomicity required? is partial-failure behavior (some writes succeed, some fail) explicitly addressed?
+- **Call to an external service, third-party API, or infrastructure dependency?** → Dependency P0: is the availability assumption stated, and what is the failure path if it's unavailable?
+- **New config value, secret, feature flag, or environment variable?** → Environment P0: is it documented and confirmed available in all deployment environments (local, staging, production)?

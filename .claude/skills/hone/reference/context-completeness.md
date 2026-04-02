@@ -59,6 +59,17 @@ What questions would they need to ask? Every question they'd ask represents a co
 
 **Question pattern**: "The spec doesn't mention which framework is used. Is this Express, Next.js API routes, Fastify, or something else?"
 
+### Sync & Conflict Resolution
+
+#### P0 — Always check (when spec involves bidirectional data flow, sync, or integration with an external service that can also mutate the same data)
+- Is the conflict resolution strategy defined? (e.g., "external source wins", "last-write-wins", "manual merge required")
+- Is there a deduplication or idempotency scheme? (e.g., what field is used as an idempotency key to avoid processing the same event twice?)
+- Is the sync state model described? (e.g., what table/field tracks "last synced at" or "external ID → internal ID" mapping?)
+
+**When to flag**: Any spec that mentions "sync", "bidirectional", "webhook from external provider", "import from", or "push to" an external service. If the spec describes a two-way data flow without specifying who wins on conflict, flag it at P0.
+
+**Question pattern**: "Task [N] describes syncing calendar events in both directions, but doesn't define what happens if the same event is modified in both systems before the next sync. Which side's change survives? How does the system detect it already processed a given external event ID?"
+
 ### The "Why" Behind Decisions
 
 #### P1 — Check for M+
@@ -110,7 +121,7 @@ What questions would they need to ask? Every question they'd ask represents a co
 ### Integration Context
 
 #### P1 — Check for M+
-- How does this feature connect to existing code?
+- Are specific existing files, classes, or functions named that this feature extends or modifies? Flag vague references like "update the service" or "add to the existing handler" when no concrete file path or identifier is given — an agent cannot locate the right code without a named anchor.
 
 #### P2 — Check for L+
 - Are there existing patterns to follow?
@@ -157,6 +168,7 @@ Score = sum of weights for complete categories.
 │  Examples           ❌  No input/output examples                      │
 │  Environment        ❌  No env vars or config listed                  │
 │  Integration        ❌  No reference to existing patterns             │
+│  Sync/conflicts     ❌  No conflict resolution strategy               │
 │  Success criteria   🟡  Present but vague                             │
 │                                                                       │
 │  Completeness: ███░░░░░░░  25%                                        │

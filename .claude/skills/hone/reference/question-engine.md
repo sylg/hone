@@ -26,6 +26,22 @@ Higher-tier questions contribute more to confidence. A review with 5 T4 question
 - BAD: "What about performance?"
 - GOOD: "Task 3 says 'query user history' but doesn't specify a time range. With 2M users averaging 500 events each, this query could return 1B rows. What's the intended scope?"
 
+### Match existing patterns
+- When the spec introduces a new mechanism (sync, queue, cache, settings store), ask which existing codebase pattern it should follow — or whether it intentionally diverges.
+- GOOD: "The spec adds a per-account rules store. Should it follow the same persistence pattern used by existing account settings, or is this a new approach? What drove that choice?"
+- This reliably surfaces T3/T4 questions because developers often assume pattern alignment without stating it.
+
+### Force architecture decisions
+- When the spec is silent on HOW something is implemented and two plausible approaches exist (sync vs async, webhook vs polling, per-user vs shared, background job vs inline), name both and ask which was chosen.
+- GOOD: "Should this sync run as a background job triggered by webhooks (real-time, more complex) or a scheduled polling job (simpler, slightly delayed)? The spec doesn't say, and this choice shapes the entire data flow and failure model."
+- This generates T5 questions and commits the developer to an approach before implementation begins — preventing expensive mid-build pivots.
+
+### Name the source of truth
+- When the spec introduces data that flows between two systems (sync, import, mirror, verify), ask which system is authoritative when they disagree — and what happens when both sides change between syncs.
+- GOOD: "After bidirectional sync, both Google Calendar and cal.com will hold event details. Which is the source of truth on conflict? If a user edits the event in both places between syncs, which version wins?"
+- GOOD: "The spec stores LinkedIn verification status locally. If the user's LinkedIn account is later deactivated or revoked, does the local status stay valid? Who owns that truth?"
+- This surfaces T3/T4 questions because source-of-truth conflicts are almost never stated in specs yet shape conflict resolution, merge logic, and invalidation strategies throughout the implementation.
+
 ### One question at a time
 - Ask a single question. Wait for the answer. Let the answer inform the next question.
 - Exception: For Size S reviews, you may ask 2-3 questions together to keep things fast.
