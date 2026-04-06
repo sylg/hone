@@ -12,6 +12,16 @@ For each task's success criteria, apply this test:
 
 If the answer is no, the success criteria are too vague.
 
+**Async operation check (P0):** If any task involves a background job, webhook handler, queue consumer, or sync process, flag it unless the spec defines *all three*:
+1. A concrete observable state after completion (e.g., DB record field, API response field)
+2. A way to trigger and wait for the operation in a test (e.g., process job inline, mock webhook call)
+3. A timeout or SLA (e.g., "within 30 seconds", "before next poll cycle")
+
+Example of untestable: "Calendar events sync to the external provider."
+Example of testable: "After `POST /api/sync`, the job runs within 10s; polling `GET /api/sync/status` returns `{status: 'completed', synced_count: N}`; external provider's API shows the created events."
+
+Apply this check especially to: calendar sync, webhook delivery, email/notification dispatch, background job processors, queue consumers, scheduled tasks, and any feature whose spec uses the words "syncs", "processes", "schedules", "notifies", "propagates", or "triggers" to describe the success condition.
+
 ## What Makes Success Criteria Testable
 
 ### Testable (good)
@@ -63,6 +73,32 @@ Flag these words in success criteria — they're almost always untestable:
 | "properly" | What does proper look like? What's improper? |
 | "correctly" | What defines correct? What's an example of incorrect? |
 
+## Error-Path Testability
+
+**Error-path check (P1):** If any task defines only the happy-path outcome — without specifying at least one failure case — flag it. A testable error path must include *all three*:
+1. The triggering condition (e.g., "when OAuth token is revoked", "when the third-party API returns 429")
+2. The observable output (error message text, HTTP status code, or UI indicator — not just "shows an error")
+3. The post-error system state (e.g., "user remains on settings page", "record is not created", "connection status stays `null`")
+
+Example of untestable: "User can connect their LinkedIn account."
+Example of testable: "Successful connect: `GET /api/connections` returns `{linkedin: {connected: true, username: string}}`; failed connect (scope denied by user): `POST /api/connections/linkedin` returns 400 `{error: 'SCOPE_DENIED'}`; toast 'LinkedIn connection failed' is shown; `GET /api/connections` still returns `{linkedin: null}`."
+
+Apply this check especially to: OAuth/SSO flows, third-party integration setup, payment processing, file upload/export, and any task where the spec mentions a "connected", "verified", or "active" status.
+
+## Status/State Enumeration Testability
+
+**State enumeration check (P1):** If any task introduces an entity with a status or state field (e.g., `connection_status`, `sync_state`, `verification_status`), flag it unless the spec lists *every* possible value and the transition that moves the entity into that state. Implementations routinely require 3–5 states where specs describe only 2 (e.g., connected/disconnected), leaving intermediate and terminal error states undefined.
+
+A testable state model must specify:
+1. All possible state values (e.g., `null`, `pending`, `connected`, `expired`, `revoked`)
+2. The event or action that triggers each transition (e.g., "moves to `expired` when the OAuth token TTL elapses")
+3. Which states are user-visible and what UI indicator represents each
+
+Example of undertested: "The integration shows as connected after OAuth completes."
+Example of testable: "`GET /api/integrations/linkedin` returns `status` of `null` (never connected), `pending` (OAuth in progress), `connected` (active token), `expired` (token TTL elapsed, re-auth needed), or `revoked` (user removed app from provider). Each state maps to a distinct UI badge. Transition to `expired` triggers a re-auth banner; transition to `revoked` clears stored tokens and sets status to `null`."
+
+Apply this check especially to: OAuth/third-party connections, sync pipelines, payment methods, background job runners, and any feature where the spec uses the words "connected", "active", "verified", or "enabled" as if they are the only possible states.
+
 ## Task Rating
 
 Rate each task:
@@ -80,77 +116,3 @@ For each VAGUE or UNTESTABLE task, suggest a concrete verification:
 **Original**: "Make the dashboard faster"
 
 **Suggested verification**:
-```
-1. Measure current page load time (DOMContentLoaded) — record baseline
-2. Measure current largest contentful paint (LCP) — record baseline
-3. After optimization:
-   - Page load time < 1.5s on 3G throttle
-   - LCP < 2.5s
-   - No layout shift (CLS < 0.1)
-4. Run Lighthouse audit — performance score > 90
-```
-
-**Original**: "Tests pass"
-
-**Suggested verification**:
-```
-1. All existing unit tests pass (npm test exits 0)
-2. New tests added for: [specific behaviors]
-3. Test coverage for new code > 80%
-4. No skipped or pending tests
-```
-
-## Missing Test Considerations
-
-Beyond success criteria, check:
-
-#### P1 — Check for M+
-- **No test strategy mentioned**: How is this feature tested? Unit? Integration? E2E? Manual?
-- **No error case testing**: Are failure modes verified?
-
-#### P2 — Check for L+
-- **No edge case coverage**: Are boundary conditions tested?
-- **No performance criteria**: Are there latency/throughput requirements?
-
-#### P3 — Check for XL only
-- **No regression testing**: How do we know nothing else broke?
-- **No acceptance criteria**: How does the product owner verify this?
-
-## Output Format
-
-### Task Rating Table
-
-```
-╭───────────────────────────────────────────────────────────────────────╮
-│  🪙 TESTABILITY REVIEW                                               │
-│                                                                       │
-│  Task 1 — Add Stripe SDK              ✅ TESTABLE                    │
-│  Task 2 — Create checkout endpoint    🟡 VAGUE ("creates a session") │
-│  Task 3 — Redirect to checkout        ✅ TESTABLE                    │
-│  Task 4 — Handle success redirect     🟡 VAGUE ("display success")   │
-│  Task 5 — Handle webhook              🔴 UNTESTABLE (no error cases) │
-│  Task 6 — Update UI                   🔴 UNTESTABLE ("show status")  │
-│                                                                       │
-│  Summary: 2 testable, 2 vague, 2 untestable                          │
-╰───────────────────────────────────────────────────────────────────────╯
-```
-
-### Individual Findings
-
-```
-🪙 ── Testability: [Short title] ────────────────────────────────────────
-
-   📍  [Which task]
-   ❓  [T2] [Question about vague success criteria]
-
-   Current criteria: "[quoted from spec]"
-   Problem: [Why this is untestable]
-
-   🔧 SUGGESTED VERIFICATION:
-      1. [Concrete step]
-      2. [Concrete step]
-      3. [Concrete step]
-
-   Rating: [TESTABLE ✅ / VAGUE 🟡 / UNTESTABLE 🔴]
-─────────────────────────────────────────────────────────────────────────
-```

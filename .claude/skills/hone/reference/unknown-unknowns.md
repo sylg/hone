@@ -25,6 +25,8 @@ Read the spec and identify which domain(s) it operates in. A spec can span multi
 | Frontend | SPA, SSR, hydration, state management, routing |
 | Mobile | native, React Native, push notification, offline |
 | ML/AI | model, training, inference, embedding, prompt |
+| Calendar sync | Google Calendar, Outlook, CalDAV, iCal, bidirectional sync, recurring events, availability |
+| Conferencing | WebRTC, video call, audio call, screen share, TURN, ICE, signaling, peer connection, media stream |
 
 ### Step 2: Domain-Specific Failure Mode Recall
 
@@ -47,6 +49,35 @@ For each identified domain, recall the common failure modes that developers enco
 
 ##### P3 — Check for XL only
 - **Refresh token rotation**: If a stolen refresh token is used, the server should detect reuse and revoke the entire family
+
+#### Calendar sync failure modes
+
+##### P0 — Always check
+- **Bidirectional sync loop**: When event A is written to calendar B, a webhook from B triggers writing back to A, creating an infinite loop. Spec must describe how synced events are "fingerprinted" (e.g., `extendedProperties`, a custom `X-Source` field, or a `syncedEventId` DB column) so the sync engine can detect and skip events it already wrote.
+- **Duplicate event creation**: If a webhook fires twice (retries) or a sync job runs concurrently, the same event gets created twice. Check whether the spec describes idempotency: upsert-by-external-ID rather than blind insert.
+- **OAuth token expiry mid-sync**: Long-running sync jobs start with a valid token that expires before the job finishes. The spec should describe proactive token refresh (check `expiry_date` before each batch) and error recovery when a refresh fails (e.g., mark calendar disconnected, notify user).
+
+##### P1 — Check for M+
+- **Recurring event exceptions (RECURRENCE-ID / EXDATE)**: Modifications or cancellations of a single instance of a recurring event are represented differently in iCalendar (via `RECURRENCE-ID`) vs. Google Calendar API (`recurringEventId`). Missing this means edited instances revert to the master pattern on next sync.
+- **Calendar API rate limits**: Google Calendar API has per-user (1M queries/day) and per-minute quotas; Outlook has similar. Bulk sync on reconnect can exhaust per-minute limits and cause 429 errors. The spec should describe exponential backoff or batch-friendly endpoints (e.g., `events.list` with `syncToken` rather than full re-fetch).
+- **Timezone ambiguity on DST boundaries**: Events stored as wall-clock time ("9:00 AM") in a DST-observing timezone can shift by 1 hour after DST changes. All-day events must be stored as `DATE` (not `DATETIME`) to avoid timezone-induced date shifts.
+
+##### P2 — Check for L+
+- **Sync token invalidation**: Google Calendar `syncToken` becomes invalid after ~7 days of inactivity or after a full wipe — the API returns HTTP 410 Gone. The spec must handle this by falling back to full re-sync rather than failing silently.
+- **Organizer vs. attendee write permissions**: A user can see an event they were invited to, but cannot modify it in the organizer's calendar. Attempting a write returns 403. Specs that sync "all visible events" often miss that attendee events are read-only.
+
+#### Conferencing / WebRTC failure modes
+
+##### P0 — Always check
+- **TURN server absence for symmetric NAT**: ICE/STUN alone fails when both peers are behind symmetric NAT (common on mobile networks and corporate firewalls). Without a TURN relay, ~15–20% of calls will silently fail to connect. The spec must either reference a TURN provider (e.g., Twilio TURN, coturn) or acknowledge this as an accepted limitation.
+- **Media permission revoked mid-session**: Users can revoke camera/microphone permissions via the browser OS-level prompt while a call is in progress. This fires a `devicechange` event and the track ends — the app must handle `track.onended` and display a recoverable error state rather than silently freezing the remote participant's view.
+
+##### P1 — Check for M+
+- **Signaling server as single point of failure**: If the WebSocket signaling channel drops after a peer connection is established, the call continues — but reconnection or new participants are blocked until the socket reconnects. The spec should describe reconnection strategy (exponential backoff, session resumption token) so in-progress calls survive transient server restarts.
+- **Codec negotiation mismatch**: Browser support for H.264 hardware encoding varies by OS and GPU; VP8/VP9 are software-only on many devices. Mismatched SDP offers can result in a one-way video stream (audio works, video is black). The spec should define a preferred codec order and fallback.
+
+##### P2 — Check for L+
+- **Recording consent and storage compliance**: If the spec includes call recording, many jurisdictions (GDPR, CCPA, state wiretapping laws) require all-party consent before recording starts. Storing recordings in object storage without TTL or access controls is a compliance liability.
 
 #### Payments failure modes
 
@@ -89,6 +120,7 @@ For each identified domain, recall the common failure modes that developers enco
 - **Lock contention**: ALTER TABLE on a large table can lock it for minutes, causing downtime
 
 ##### P1 — Check for M+
+- **Missing state transition constraints**: Features that introduce a status or state field (e.g., invite: `pending → accepted → expired`; verification: `pending → verified → revoked`; fraud rule: `draft → active → disabled`; reset token: `active → used`) rarely specify which transitions are valid or where they are enforced. Without guards, an `accepted` invite can be re-accepted, or a `used` token reused. The spec should enumerate valid transitions for each status field and identify the enforcement layer: DB `CHECK` constraint, application-level guard function, or idempotent upsert. Also check whether orphaned records in intermediate states (e.g., an invite stuck in `processing` for > 1 hour) are handled.
 - **Ghost rows during migration**: Rows created during migration may use old schema constraints
 - **N+1 queries**: ORM hides the fact that a loop generates 1000 individual queries
 - **Connection pool exhaustion**: Long-running transactions hold connections, starving other requests

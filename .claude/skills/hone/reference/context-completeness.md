@@ -70,6 +70,21 @@ What questions would they need to ask? Every question they'd ask represents a co
 
 **Question pattern**: "Task [N] describes syncing calendar events in both directions, but doesn't define what happens if the same event is modified in both systems before the next sync. Which side's change survives? How does the system detect it already processed a given external event ID?"
 
+### Success Criteria
+
+#### P0 — Always check
+- Are success criteria stated in testable, verifiable terms? (not "it should work" but "given X input, the system produces Y output")
+
+#### P1 — Check for M+
+- Are happy-path acceptance conditions described? (what observable state proves the feature is working?)
+- Are failure/error conditions specified with expected outcomes? (what should happen when X fails?)
+
+#### P2 — Check for L+
+- Are performance or scale benchmarks defined? (e.g., "sync completes within 30s for up to 1000 events")
+- Are automated test scenarios or example payloads outlined?
+
+**Question pattern**: "How will we know when this feature is complete? The spec doesn't define what passing looks like — what inputs and outputs prove the feature works correctly?"
+
 ### The "Why" Behind Decisions
 
 #### P1 — Check for M+
@@ -121,7 +136,7 @@ What questions would they need to ask? Every question they'd ask represents a co
 ### Integration Context
 
 #### P1 — Check for M+
-- Are specific existing files, classes, or functions named that this feature extends or modifies? Flag vague references like "update the service" or "add to the existing handler" when no concrete file path or identifier is given — an agent cannot locate the right code without a named anchor.
+- How does this feature connect to existing code?
 
 #### P2 — Check for L+
 - Are there existing patterns to follow?

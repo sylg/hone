@@ -16,6 +16,49 @@ Questions are categorized by what they surface:
 
 Higher-tier questions contribute more to confidence. A review with 5 T4 questions is more valuable than one with 20 T1 questions.
 
+## T4 Trigger Patterns (Domain-Specific Unknown Unknowns)
+
+T4 questions require domain knowledge to surface. Use these triggers to know when to escalate:
+
+### Auth & Password Reset Flows
+When a spec touches password reset, credential change, or account recovery, always probe:
+- **Token lifecycle**: Is the reset token single-use? Does it expire? What happens to existing tokens when a new one is issued?
+- **Session invalidation**: Does a successful password reset invalidate all existing sessions (including OAuth tokens, API keys, remember-me cookies)?
+- **Enumeration risk**: Does the "send reset email" endpoint reveal whether an email exists in the system via timing or response differences?
+- **Rate limiting**: Is the reset-request endpoint rate-limited per email address AND per IP? Unlimited requests = account harassment vector.
+- **Audit trail**: Is the password change event logged with actor, timestamp, and IP for compliance and incident response?
+
+### Org-Scoped / Multi-Tenant Operations
+When a spec adds functionality at the organization level, always probe:
+- **Permission scope**: Who is allowed to perform this action — org owner only, any admin, any member? Does the spec match how existing org-admin actions are gated (check the existing permission middleware pattern)?
+- **Cross-org isolation**: Can an admin from Org A trigger this action for a user in Org B? Verify the query is always scoped by `orgId`.
+- **Member vs. invitee state**: Does the operation apply to pending invites or only active members? The spec often omits the pending state.
+- **Notification ownership**: When an org-level action affects a user (e.g., forced password reset), who gets notified — the user, the org admin, or both? What if the user's email is unverified?
+
+### Database & Schema Changes
+When a spec adds, modifies, or removes database columns/tables, always probe:
+- **Zero-downtime migration**: Can the migration run while the app is live? Adding a NOT NULL column without a default locks the table on Postgres until backfill completes — even a 1M-row table can cause minutes of write downtime.
+- **Backfill strategy**: If new columns need data populated from existing rows, how is that done? Inline in the migration (blocks deploys on large tables) or async job (requires nullable column + code to handle the transitional state where both old and new rows exist simultaneously)?
+- **Rollback safety**: If the deploy is rolled back, does the schema remain compatible with the previous code version? A column rename or removal breaks old code even after rollback — the spec should specify whether a multi-phase deploy is required.
+- **Index creation**: Are new indexes created `CONCURRENTLY`? A standard `CREATE INDEX` on a table with 10M+ rows holds a write lock for minutes. Concurrent creation avoids this but cannot run inside a transaction.
+
+### Webhook / External Event Flows
+When a spec involves receiving or emitting webhooks:
+- **Idempotency**: If the same event is delivered twice (at-least-once delivery is standard), does the handler produce the same result or does it double-apply?
+- **Signature verification**: Is the incoming webhook payload verified before any state mutation?
+- **Delivery ordering**: Does the handler assume events arrive in order? Most webhook providers (Stripe, Google Calendar, GitHub, etc.) do not guarantee ordering — a `resource.updated` event can arrive before `resource.created` during retries. The handler must be safe to process events out of sequence.
+- **Failure visibility**: If the webhook handler throws, does the error surface to the team (dead letter queue, alerting, error tracker)? Silent failures mean the external system retries indefinitely or silently drops the event, causing invisible data drift.
+- **Outbound retry policy**: For webhooks the app emits, what's the retry strategy on subscriber failure? Exponential backoff with a max-attempt cap? What happens to the subscriber's state when retries are exhausted — is there a dead letter mechanism or manual replay path?
+
+### Data Sync / Bidirectional Integration
+When a spec involves syncing data between the app and an external system (calendars, CRMs, accounting tools, communication platforms):
+- **Conflict resolution strategy**: If both sides can mutate the same record (e.g., user edits event in Google Calendar AND in the app), what wins on conflict — last-write-wins, a designated source of truth, or a manual merge UI? The spec must specify this explicitly; defaulting to last-write-wins silently discards data.
+- **Cursor / checkpoint persistence**: Where is the sync position (page token, delta cursor, `last_synced_at` timestamp) stored and updated? If the sync job crashes mid-run, does it resume from the last checkpoint or restart from scratch? Restarting from scratch on large datasets causes redundant API calls and potential rate-limit exhaustion.
+- **Partial failure handling**: If syncing 500 records and record #237 fails (e.g., external API validation error), does the job abort, skip-and-continue, or quarantine the failed item? How are skipped/failed items surfaced to the user or ops team — silent discard is unacceptable.
+- **External API rate limits**: Most calendar/CRM APIs enforce per-user and per-org rate limits. A bulk re-sync triggered by a migration, a new user onboarding, or a backfill job can exhaust these limits instantly. Does the spec account for throttling, queuing, or backoff to avoid getting the integration suspended?
+
+---
+
 ## Question Construction Rules
 
 ### Be specific, not generic
@@ -26,21 +69,12 @@ Higher-tier questions contribute more to confidence. A review with 5 T4 question
 - BAD: "What about performance?"
 - GOOD: "Task 3 says 'query user history' but doesn't specify a time range. With 2M users averaging 500 events each, this query could return 1B rows. What's the intended scope?"
 
-### Match existing patterns
-- When the spec introduces a new mechanism (sync, queue, cache, settings store), ask which existing codebase pattern it should follow — or whether it intentionally diverges.
-- GOOD: "The spec adds a per-account rules store. Should it follow the same persistence pattern used by existing account settings, or is this a new approach? What drove that choice?"
-- This reliably surfaces T3/T4 questions because developers often assume pattern alignment without stating it.
+### Probe the data contract
+When a spec describes behavior but not the underlying data structure, API shape, or state representation, challenge it — these decisions constrain implementation more than any behavioral description:
+- BAD: "How will user preferences be stored?"
+- GOOD: "Task 2 says 'persist user preferences' but doesn't specify the data contract. Will this be a new `user_preferences` table, a JSONB column on `users`, or a key-value store? Each has different migration, indexing, and query implications for the dashboard query in Task 4."
 
-### Force architecture decisions
-- When the spec is silent on HOW something is implemented and two plausible approaches exist (sync vs async, webhook vs polling, per-user vs shared, background job vs inline), name both and ask which was chosen.
-- GOOD: "Should this sync run as a background job triggered by webhooks (real-time, more complex) or a scheduled polling job (simpler, slightly delayed)? The spec doesn't say, and this choice shapes the entire data flow and failure model."
-- This generates T5 questions and commits the developer to an approach before implementation begins — preventing expensive mid-build pivots.
-
-### Name the source of truth
-- When the spec introduces data that flows between two systems (sync, import, mirror, verify), ask which system is authoritative when they disagree — and what happens when both sides change between syncs.
-- GOOD: "After bidirectional sync, both Google Calendar and cal.com will hold event details. Which is the source of truth on conflict? If a user edits the event in both places between syncs, which version wins?"
-- GOOD: "The spec stores LinkedIn verification status locally. If the user's LinkedIn account is later deactivated or revoked, does the local status stay valid? Who owns that truth?"
-- This surfaces T3/T4 questions because source-of-truth conflicts are almost never stated in specs yet shape conflict resolution, merge logic, and invalidation strategies throughout the implementation.
+If the answer pins down a concrete shape, record it explicitly — it will anchor implementation decisions downstream.
 
 ### One question at a time
 - Ask a single question. Wait for the answer. Let the answer inform the next question.
@@ -51,130 +85,3 @@ Higher-tier questions contribute more to confidence. A review with 5 T4 question
 - GOOD: "This endpoint is public-facing with no rate limiting specified. What's the expected traffic volume, and what happens if it's 10x higher?"
 
 ## Question Flow
-
-```
-Ask question → Wait for answer → Process answer
-                                      │
-                    ┌─────────────────┼─────────────────┐
-                    │                 │                  │
-              Answer resolves   Answer reveals     Developer can't
-              the concern       new concern        answer
-                    │                 │                  │
-              Mark addressed    Queue follow-up    Flag as unresolved
-              Move on           question            Assess risk level
-```
-
-### Processing Answers
-
-When the developer answers:
-
-1. **Resolves the concern**: Record the answer. Check if it also resolves any other pending questions. Move to next question.
-
-2. **Reveals new concern**: Record the answer. Generate a follow-up question targeting the new concern. This is not "moving the goalposts" — it's the review working as intended.
-
-3. **Can't answer**: This is valuable signal. Record as unresolved. Assess risk:
-   - Low risk: Note it, move on
-   - Medium risk: Flag it, suggest research
-   - High risk: This may affect the verdict (NEEDS HONING or worse)
-
-### Deferral
-
-The developer can defer any question: "I'll figure this out later." Deferred questions:
-- Stay visible in the final report
-- Are tagged with risk level
-- Count toward the scorecard but don't count as "answered"
-- May lower the confidence score if high-risk
-
-## Confidence Calculation
-
-**IMPORTANT**: Do NOT calculate confidence manually. Use `scripts/confidence.py` by piping a JSON scorecard to it. The script handles all weighting, constraints, and edge cases correctly.
-
-Confidence is based on:
-
-1. **Question coverage**: Did the review cover all applicable dimensions?
-2. **Answer ratio**: What percentage of questions were answered (not deferred)?
-3. **Tier distribution**: Higher-tier questions answered → higher confidence
-4. **Unresolved risk**: How many high-risk questions remain unanswered?
-
-```
-Confidence Score = (answered_weight / total_weight) × dimension_coverage
-
-Where:
-  answered_weight = sum of (tier_weight × 1) for each answered question
-  total_weight = sum of (tier_weight × 1) for all questions asked
-  dimension_coverage = dimensions_run / dimensions_applicable
-
-Mapping:
-  >= 0.8 → HIGH
-  >= 0.5 → MEDIUM
-  < 0.5  → LOW
-```
-
-### Constraint 1: Minimum Tier Diversity
-
-Confidence CANNOT be HIGH unless at least one T3+ question was asked and answered. A review that only asks T1/T2 questions caps at 0.79 (MEDIUM) regardless of answer ratio.
-
-### Constraint 2: Minimum Question Count Per Size
-
-Confidence CANNOT be HIGH unless question count meets minimum for the spec size:
-
-| Size | Min for HIGH | Min for MEDIUM |
-|------|-------------|----------------|
-| S    | 2           | 1              |
-| M    | 4           | 2              |
-| L    | 10          | 5              |
-| XL   | 15          | 8              |
-
-### Scorecard JSON Format (for scripts/confidence.py)
-
-Pipe this JSON to `scripts/confidence.py` to get the score:
-
-```json
-{
-  "questions": [
-    {"tier": "T2", "status": "answered"},
-    {"tier": "T3", "status": "answered"},
-    {"tier": "T4", "status": "deferred"},
-    {"tier": "T2", "status": "skipped"}
-  ],
-  "dimensions_run": 3,
-  "dimensions_applicable": 5,
-  "size": "M"
-}
-```
-
-Output:
-```json
-{"score": 0.65, "label": "MEDIUM", "constraints_applied": ["Capped: only 3 answered, need 4 for HIGH at size M"]}
-```
-
-## Question Pacing
-
-Match question pacing to task size:
-
-| Size | Pacing |
-|------|--------|
-| S | 2-3 questions, can be asked together. Fast. |
-| M | 5-10 questions, asked 1-2 at a time. Steady. |
-| L | 15-25 questions, asked 1 at a time. Thorough. Group by dimension. |
-| XL | 25+ questions, asked 1 at a time. Signal dimension transitions. Take breaks between dimensions. |
-
-## Scorecard Format
-
-After the review, display:
-
-```
-Questions asked:           [total]
-  T1 Clarification:        [n]
-  T2 Gap:                  [n]
-  T3 Challenge:            [n]
-  T4 Unknown Unknown:      [n]
-  T5 Tradeoff:             [n]
-Questions answered:        [n]
-Questions deferred:         [n]
-Unknown unknowns surfaced:  [n]
-
-Confidence: [████████░░] [HIGH/MEDIUM/LOW]
-```
-
-A spec that survived 23 questions is categorically different from one that survived 3. The scorecard is the proof.

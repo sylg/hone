@@ -124,6 +124,8 @@ Every gap found should be presented as a question, not a statement.
 
 The question format forces the developer to think about it, not just acknowledge it.
 
+**Before flagging a gap, apply this test:** "Would two reasonable developers make *different* implementation choices because this is unspecified?" If the answer is no — because standard practice covers it, the domain implies it, or any competent dev would handle it the same way — skip it. Only flag gaps where the absence of specification could lead to divergent implementations. This is the difference between a real architectural gap and a generic best-practice reminder.
+
 ## Severity Assessment
 
 | Severity | Criteria |
